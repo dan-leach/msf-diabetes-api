@@ -1,3 +1,3 @@
-# BSPED Paediatric DKA Calculator API
+# MSF Diabetes API
 
-View the documentation here: https://github.com/dan-leach/dka-calculator-api/wiki
+View the documentation here: https://github.com/dan-leach/msf-diabetes-api/wiki

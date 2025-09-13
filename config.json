@@ -1,45 +1,46 @@
 {
-  "appName": "Paediatric DKA Calculator",
+  "appName": "MSF Diabetes Calculator",
   "underDevelopment": false,
   "author": {
     "name": "Dan Leach",
     "url": "https://danleach.uk",
-    "email": "admin@dka-calculator.co.uk",
+    "email": "web@danleach.uk",
     "contributors": {
-      "current": "<a href='https://github.com/drJonathanFenwick/' target='_blank'>Jonathan Fenwick</a>, <a href='https://github.com/dannysimpson0912/' target='_blank'>Danny Simpson</a>, <a href='https://github.com/rspaull/' target='_blank'>Rob Spaull</a>, <a href='https://sec.stealthcopter.com/' target='_blank'>Mat Rollings</a>",
-      "url": "https://github.com/dan-leach/dka-calculator/wiki/Contributors"
+      "current": "",
+      "url": "https://github.com/dan-leach/msf-diabetes/wiki/Contributors"
     }
   },
   "organisations": {
-    "bsped": {
-      "main": "https://www.bsped.org.uk",
-      "dkaGuidelines": "https://www.bsped.org.uk/clinical-resources/bsped-dka-guidelines/"
-    },
-    "ispad": "https://www.ispad.org"
+    "msf": {
+        "shortName": "MSF Foundation",
+        "fullName": "Médecins Sans Frontières Foundation",
+      "main": "https://fondation.msf.fr/",
+      "dkaGuidelines": "https://fondation.msf.fr/"
+    }
   },
   "disclaimer": "Decisions about patient care remain the treating clinician's responsibility.",
   "api": {
     "repo": {
-      "main": "https://github.com/dan-leach/dka-calculator-api",
-      "changelog": "https://github.com/dan-leach/dka-calculator-api/wiki/Changelog"
+      "main": "https://github.com/dan-leach/msf-diabetes-api",
+      "changelog": "https://github.com/dan-leach/msf-diabetes-api/wiki/Changelog"
     },
-    "url": "https://api.dka-calculator.co.uk/",
+    "url": "https://api.msf.dka-calculator.co.uk/",
     "timeoutDuration": 15000,
     "showConsole": true,
     "tables": {
-      "calculate": "tbl_data_v2",
-      "update": "tbl_update_v2",
-      "sodiumOsmo": "tbl_sodiumOsmo_v2",
+      "calculate": "tbl_data_v0",
+      "update": "tbl_update_v0",
+      "sodiumOsmo": "tbl_sodiumOsmo_v0",
       "decrypt": "tbl_decrypt"
     }
   },
   "client": {
-    "url": "https://dka-calculator.co.uk",
-    "sodiumOsmoUrl": "https://dka-calculator.co.uk/sodium-osmo",
+    "url": "https://msf.dka-calculator.co.uk",
+    "sodiumOsmoUrl": "https://msf.dka-calculator.co.uk/sodium-osmo",
     "repo": {
-      "main": "https://github.com/dan-leach/dka-calculator",
-      "changelog": "https://github.com/dan-leach/dka-calculator/wiki/Changelog",
-      "icpChangelog": "https://github.com/dan-leach/dka-calculator/wiki/Integrated-Care-Pathway-(ICP)-Changelog"
+      "main": "https://github.com/dan-leach/msf-diabetes",
+      "changelog": "https://github.com/dan-leach/msf-diabetes/wiki/Changelog",
+      "icpChangelog": "https://github.com/dan-leach/msf-diabetes/wiki/Integrated-Care-Pathway-(ICP)-Changelog"
     }
   },
   "validation": {
@@ -59,16 +60,15 @@
       "min": 6.0,
       "max": 7.5
     },
-    "bicarbonate": {
-      "min": 0,
-      "max": 35
-    },
     "glucose": {
       "min": 3,
       "max": 50
     },
-    "ketones": {
+    "bloodKetones": {
       "min": 3
+    },
+    "urineKetones": {
+        "min": 2
     },
     "sodium": {
       "min": 100,

@@ -19,7 +19,6 @@ const crypto = require("crypto");
 const { matchedData } = require("express-validator");
 const {
   validateRequest,
-  updateRules,
   calculateRules,
   sodiumOsmoRules,
 } = require("./modules/validate");
@@ -54,7 +53,7 @@ const rehashPatientHash = (patientHash) =>
  */
 app.get("/", (req, res) => {
   res.send(
-    "Please go to <a href='https://dka-calculator.co.uk/'>https://dka-calculator.co.uk</a> instead."
+    "Please go to <a href='https://msf.dka-calculator.co.uk/'>https://msf.dka-calculator.co.uk</a> instead."
   );
 });
 
@@ -71,9 +70,8 @@ app.get("/", (req, res) => {
 app.get("/config", (req, res) => {
   try {
     const config = require("./config.json");
-    config.organisations.bsped.icpVersion = process.env.icpVersion;
-    config.api.version = process.env.apiVersion;
     config.client.version = process.env.clientVersion;
+    config.api.version = process.env.apiVersion;
     config.lastUpdated = process.env.lastUpdated;
     res.json(config);
   } catch (error) {
@@ -121,7 +119,6 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
     const { calculateVariables } = require("./modules/calculateVariables");
     const { generateAuditID } = require("./modules/generateAuditID");
     const { insertCalculateData } = require("./modules/insertData");
-    const { getImdDecile } = require("./modules/getImdDecile");
     const {
       checkWeightWithinLimit,
     } = require("./modules/checkWeightWithinLimit");
@@ -169,18 +166,14 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
     }
 
     //set undefined optional values to null
-    data.bicarbonate = data.bicarbonate || null;
-    data.glucose = data.glucose || null;
-    data.ketones = data.ketones || null;
+    data.pH = data.pH || null;
+    data.bloodKetones = data.bloodKetones || null;
+    data.urineKetones = data.urineKetones || null;
+    data.underFollowUp = data.underFollowUp || null;
 
     //perform the 2nd stage hashing with salt
     const patientHash = data.patientHash
       ? rehashPatientHash(data.patientHash)
-      : null;
-
-    //get the imdDecile from the postcode
-    const imdDecile = data.patientPostcode
-      ? await getImdDecile(data.patientPostcode)
       : null;
 
     //generate a new unique auditID
@@ -194,19 +187,15 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
       pH: data.pH,
       weight: data.weight,
       calculations: calculations,
-      bicarbonate: data.bicarbonate,
       glucose: data.glucose,
-      ketones: data.ketones,
+      bloodKetones: data.bloodKetones,
+      urineKetones: data.urineKetones,
       weightLimitOverride: data.weightLimitOverride,
       use2SD: data.use2SD,
       shockPresent: data.shockPresent,
       insulinRate: data.insulinRate,
       preExistingDiabetes: data.preExistingDiabetes,
-      insulinDeliveryMethod: data.insulinDeliveryMethod,
-      ethnicGroup: data.ethnicGroup,
-      ethnicSubgroup: data.ethnicSubgroup,
-      preventableFactors: data.preventableFactors,
-      imdDecile: imdDecile,
+      underFollowUp: data.underFollowUp,
     });
 
     //insert the data into the database
@@ -267,104 +256,6 @@ app.get("/decrypt", async (req, res) => {
     res.json("Decrypt run");
   } catch (error) {
     handleError(error, 500, "/decrypt", "Failed to decrypt", res);
-  }
-});
-
-/**
- * @route POST /update
- * @summary Updates episode data with validated fields and verifies patient identity through audit ID and hash matching.
- *
- * @description This endpoint receives a POST request to update patient episode data in the database, with validation
- * of patient identity and additional checks:
- * - Validates request data with `updateRules` and `validateRequest`.
- * - Confirms if the audit ID exists in the database and logs failed attempts if not.
- * - Verifies the patient's NHS number and date of birth through hash matching.
- * - Constructs a cerebral oedema object if applicable and stores the updated data.
- *
- * @requires ./modules/insertData - Module to insert or update data in the database.
- * @requires ./modules/updateCheck - Module to check and retrieve patient data based on audit ID.
- * @requires ./modules/encrypt - Module for encrypting calculated data before storage.
- *
- * @param {object} req - The request object, with validated update data.
- * @param {object} req.body - Contains patient data fields, including audit ID and patient hash.
- * @param {object} res - The response object for sending update results or error messages.
- *
- * @returns {string} 200 - Success message confirming the update.
- * @returns {string} 404 - Error message if audit ID is not found in the database.
- * @returns {string} 406 - Error message if the episode was created without providing an NHS number.
- * @returns {string} 401 - Error message if submitted patient hash does not match the stored patient hash.
- * @returns {object} 500 - Error message if a server error occurs.
- */
-app.post("/update", updateRules, validateRequest, async (req, res) => {
-  try {
-    const { insertUpdateData } = require("./modules/insertData");
-    const { updateCheck } = require("./modules/updateCheck");
-    const { encrypt } = require("./modules/encrypt");
-
-    //get the submitted data that passed validation
-    const data = matchedData(req);
-
-    //get the patientHash in the database for given audit ID to check correct patient
-    const check = await updateCheck(data.auditID);
-
-    //check the updateCheck found a record
-    try {
-      if (!check) {
-        throw new Error(`Audit ID [${data.auditID}] not found in database`);
-      }
-    } catch (error) {
-      handleError(error, 401, "/update", "Failed to perform update", res);
-      return false;
-    }
-
-    //check the episode has a patientHash
-    if (!check.patientHash) {
-      res
-        .status(406)
-        .json(
-          `The episode matching the audit ID [${data.auditID}] was created without providing an NHS number. Retrospective audit data updates are therefore not accepted.`
-        );
-      return;
-    }
-
-    //perform the second step hash before checking patientHash matches
-    const patientHash = rehashPatientHash(data.patientHash);
-
-    //check the submitted patientHash matches the database patient hash
-    if (check.patientHash != patientHash) {
-      res
-        .status(401)
-        .json(
-          `Patient NHS number or date of birth do not match for episode with audit ID: ${data.auditID}`
-        );
-      const logEntry = `Failed update attempt (Hash non-matching) on auditID: ${
-        data.auditID
-      }, IP: ${req.ip}, Time: ${new Date().toISOString()}\n`;
-      const fs = require("fs");
-      fs.appendFileSync("./private/update_failed_attempts.txt", logEntry);
-      return;
-    }
-
-    //get the IP address of the client request
-    const clientIP = req.ip;
-
-    const encryptedData = encrypt({
-      protocolStartDatetime: data.protocolEndDatetime,
-      preExistingDiabetes: data.preExistingDiabetes,
-      preventableFactors: data.preventableFactors,
-      cerebralOedema: {
-        concern: data.cerebralOedemaConcern,
-        imaging: data.cerebralOedemaImaging,
-        treatment: data.cerebralOedemaTreatment,
-      },
-    });
-
-    //update the database with new data
-    await insertUpdateData(data, encryptedData, clientIP);
-
-    res.json("Audit data update complete");
-  } catch (error) {
-    handleError(error, 500, "/update", "Failed to perform update", res);
   }
 });
 
