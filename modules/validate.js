@@ -37,18 +37,6 @@ const calculateRules = [
     .custom((value) => ["male", "female"].includes(value))
     .withMessage("Patient sex must be male or female."),
 
-  check("patientHash")
-    .optional()
-    .isAlphanumeric()
-    .withMessage(
-      "If provided, patient hash field must be data type [string], containing alphanumeric characters only."
-    )
-    .bail()
-    .isLength({ min: 64, max: 64 })
-    .withMessage(
-      "If provided, patient hash field must be exactly 64 characters in length."
-    ),
-
   check("protocolStartDatetime")
     .isISO8601() // Validates the input as an ISO 8601 date
     .withMessage("Protocol start datetime must be ISO8601 date format.")
@@ -112,6 +100,43 @@ const calculateRules = [
       `pH must be in range ${config.validation.pH.min} to ${config.validation.pH.max}.`
     ),
 
+  check("bicarbonate")
+    .optional()
+    .custom((value) => {
+      //use custom validator as isFloat will accept numbers with string datatype
+      if (typeof value !== "number" || !Number.isFinite(value)) {
+        throw new Error("Bicarbonate field must be data type [float].");
+      }
+      return true;
+    })
+    .bail()
+    .isFloat({
+      min: config.validation.bicarbonate.min,
+      max: config.validation.bicarbonate.max,
+    })
+    .withMessage(
+      `Bicarbonate must be in range ${config.validation.bicarbonate.min} to ${config.validation.bicarbonate.max}.`
+    ),
+
+  check("gcs")
+    .custom((value) => {
+      const num = Number(value);
+
+      if (!Number.isInteger(num)) {
+        throw new Error("GCS field must be data type [integer].");
+      }
+
+      return true;
+    })
+    .bail()
+    .isFloat({
+      min: config.validation.gcs.min,
+      max: config.validation.gcs.max,
+    })
+    .withMessage(
+      `GCS must be in range ${config.validation.gcs.min} to ${config.validation.gcs.max}.`
+    ),
+
   check("glucose")
     .custom((value) => {
       //use custom validator as isFloat will accept numbers with string datatype
@@ -150,7 +175,7 @@ const calculateRules = [
       `If provided, blood ketones must be at least ${config.validation.bloodKetones.min}mmol/L (the diagnostic threshold for DKA).`
     ),
 
-    check("urineKetones")
+  check("urineKetones")
     .if(body("bloodKetones").equals(""))
     .custom((value) => {
       //use custom validator as isFloat will accept numbers with string datatype
@@ -206,9 +231,7 @@ const calculateRules = [
   check("underFollowUp")
     .if(body("preExistingDiabetes").equals("true"))
     .isBoolean()
-    .withMessage(
-      "Under follow up field must be data type [boolean]."
-    ),
+    .withMessage("Under follow up field must be data type [boolean]."),
 
   check("episodeType")
     .isAlpha()
@@ -219,14 +242,14 @@ const calculateRules = [
     .custom((value) => config.validation.episodeType.options.includes(value))
     .withMessage("Invalid episode type option provided."),
 
-  check("region")
+  check("operationalCentre")
     .isString()
-    .withMessage("Region field must be data type [string].")
+    .withMessage("Operational centre field must be data type [string].")
     .escape(),
 
-  check("centre")
+  check("project")
     .isString()
-    .withMessage("Treating centre field must be data type [string].")
+    .withMessage("Project field must be data type [string].")
     .escape(),
 
   check("appVersion")
@@ -251,7 +274,6 @@ const calculateRules = [
     .withMessage("Client useragent field must be data type [string].")
     .escape(),
 ];
-
 
 const sodiumOsmoRules = [
   check("sodium")

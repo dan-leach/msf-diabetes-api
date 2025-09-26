@@ -31,17 +31,6 @@ app.use(bodyParser.json());
 app.set("trust proxy", 3);
 
 /**
- * Rehashes the patient hash with salt.
- * @param {string} patientHash - The original patient hash.
- * @returns {string} - The rehashed patient hash.
- */
-const rehashPatientHash = (patientHash) =>
-  crypto
-    .createHash("sha256")
-    .update(patientHash + process.env.salt)
-    .digest("hex");
-
-/**
  * @route GET /
  * @summary Redirects users to the main website.
  *
@@ -167,15 +156,12 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
 
     //set undefined optional values to null
     data.pH = data.pH || null;
+    data.bicarbonate = data.bicarbonate || null;
     data.bloodKetones = data.bloodKetones || null;
     data.urineKetones = data.urineKetones || null;
     data.underFollowUp = data.underFollowUp || null;
 
-    //perform the 2nd stage hashing with salt
-    const patientHash = data.patientHash
-      ? rehashPatientHash(data.patientHash)
-      : null;
-
+    /*
     //generate a new unique auditID
     const auditID = await generateAuditID();
 
@@ -206,10 +192,10 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
       patientHash,
       clientIP
     );
-
+*/
     //respond to the client with the auditID and the calculations
     res.json({
-      auditID,
+      //auditID,
       calculations,
     });
   } catch (error) {

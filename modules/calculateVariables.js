@@ -18,57 +18,46 @@ const calculateVariables = (data) => {
   const volumeToRate = (volume, unitTime) => volume / unitTime;
 
   /**
-   * Determines the severity of the condition based on pH and bicarbonate levels.
-   * @returns {string|boolean} - Severity level ("severe", "moderate", "mild") or false if no valid severity is found.
+   * Determines the severity of the condition based onpH, bicarbonate, urine ketones or blood ketones.
+   * @returns {string|boolean} - Severity level ("severe", "moderate") or false if no valid severity is found.
    */
   const calculateSeverity = () => {
     /**
-     * Gets the severity based on pH and bicarbonate.
+     * Gets the severity based on pH, bicarbonate, urine ketones or blood ketones.
      * @returns {string} - The severity grade if matched, otherwise false.
      */
     const calculateVal = () => {
-      /**
-       * Checks if the given pH and bicarbonate values fall within the range for a specific severity level.
-       * @param {Object} levelConfig - Configuration for the severity level.
-       * @returns {string|false} - Severity level if matched, otherwise false.
-       */
-      const checkSeverityLevel = (levelConfig) => {
-        const { pHRange, bicarbonateBelow } = levelConfig;
-
+      if (data.pH && (data.bloodKetones || data.urineKetones)) {
+        // Must check that ketones are also present
+        if (data.pH < config.severity.severe.pHRange.upper) {
+          return "severe";
+        }
         if (
-          (data.pH < pHRange.upper && data.pH >= pHRange.lower) ||
-          (typeof data.bicarbonate !== undefined &&
-            data.bicarbonate < bicarbonateBelow)
+          data.bicarbonate &&
+          data.bicarbonate < config.severity.moderate.bicarbonateBelow
         ) {
-          return levelConfig.severity;
+          return "moderate";
         }
-
-        return false;
-      };
-
-      // Severity levels configuration
-      const severityLevels = [
-        { severity: "severe", ...config.severity.severe },
-        { severity: "moderate", ...config.severity.moderate },
-        { severity: "mild", ...config.severity.mild },
-      ];
-
-      // Check each severity level
-      for (const levelConfig of severityLevels) {
-        const result = checkSeverityLevel(levelConfig);
-        if (result) {
-          return result;
+        if (data.pH < config.severity.moderate.pHRange.upper) {
+          return "moderate";
         }
+        // Log error if no valid severity is found
+        throw new Error(
+          `pH of ${data.pH} and bicarbonate of ${data.bicarbonate} mmol/L does not meet the diagnostic threshold for DKA.`
+        );
+      } else if (data.bloodKetones || data.urineKetones) {
+        if (data.gcs <= config.validation.gcs.severeThreshold) return "severe";
+        if (data.shockPresent) return "severe";
+        return "moderate";
+      } else {
+        throw new Error(
+          "Insufficient data to determine DKA severity: pH, blood ketones or urine ketones required."
+        );
       }
-
-      // Log error if no valid severity is found
-      throw new Error(
-        `pH of ${data.pH} and bicarbonate of ${data.bicarbonate} mmol/L does not meet the diagnostic threshold for DKA.`
-      );
     };
     const val = calculateVal();
 
-    const formula = `pH [>=${config.severity.mild.pHRange.lower} and <${config.severity.mild.pHRange.upper}] or bicarbonate [<${config.severity.mild.bicarbonateBelow}mmol/L] ==> mild<br>pH [>=${config.severity.moderate.pHRange.lower} and <${config.severity.moderate.pHRange.upper}] or bicarbonate [<${config.severity.moderate.bicarbonateBelow}mmol/L] ==> moderate<br>pH [>=${config.severity.severe.pHRange.lower} and <${config.severity.severe.pHRange.upper}] or bicarbonate [<${config.severity.severe.bicarbonateBelow}mmol/L] ==> severe<br>(if bicarbonate and pH return different severity levels, most severe option is used)`;
+    const formula = `pH [>=${config.severity.moderate.pHRange.lower} and <${config.severity.moderate.pHRange.upper}] or bicarbonate [<${config.severity.moderate.bicarbonateBelow}mmol/L] ==> moderate<br>pH [>=${config.severity.severe.pHRange.lower} and <${config.severity.severe.pHRange.upper}] ==> severe<br>GCS [<=${config.validation.gcs.severeThreshold}] or shock present [true] ==> severe<br>GCS [>${config.validation.gcs.severeThreshold}] and shock present [false] ==> moderate`;
 
     /**
      * Generates a string showing the working used to find the severity level.
@@ -76,10 +65,15 @@ const calculateVariables = (data) => {
      */
     const working = () => {
       if (!val) return false;
-      let working = `pH [${data.pH}] is [>=${config.severity[val].pHRange.lower} and <${config.severity[val].pHRange.upper}] `;
-      if (data.bicarbonate)
-        working += `or bicarbonate [${data.bicarbonate}] is [<${config.severity[val].bicarbonateBelow}mmol/L] `;
-      working += `==> ${val}`;
+      let working;
+      if (data.pH) {
+        working = `pH [${data.pH}] is [>=${config.severity[val].pHRange.lower} and <${config.severity[val].pHRange.upper}] `;
+        if (data.bicarbonate)
+          working += `or bicarbonate [${data.bicarbonate}] is [<${config.severity[val].bicarbonateBelow}mmol/L] `;
+        working += `==> ${val}`;
+      } else {
+        working = `Shock present [${data.shockPresent}] or GCS [${data.gcs} is <=${config.validation.gcs.severeThreshold}] ==> ${val}`;
+      }
       return working;
     };
 
@@ -138,8 +132,6 @@ const calculateVariables = (data) => {
    * @returns {Object} - An object containing deficit percentage, volume, and rate calculations.
    */
   const calculateDeficit = () => {
-    const pH = data.pH;
-    const bicarbonate = data.bicarbonate;
     /**
      * Determines the deficit percentage based on severity.
      * @returns {Object} - An object containing the deficit percentage, formula, and working calculation.
@@ -150,10 +142,11 @@ const calculateVariables = (data) => {
        * @returns {number} - The deficit percentage.
        */
       const calculateVal = () => {
+        console.error("############## severity.val:", severity.val);
+
         const severityMap = {
           severe: config.severity.severe.deficitPercentage,
           moderate: config.severity.moderate.deficitPercentage,
-          mild: config.severity.mild.deficitPercentage,
         };
         if (severityMap.hasOwnProperty(severity.val)) {
           return severityMap[severity.val];
@@ -170,7 +163,7 @@ const calculateVariables = (data) => {
        * @returns {string} - The formula for determining deficit percentage.
        */
       const calculateFormula = () =>
-        `Severity [mild] ==> ${config.severity.mild.deficitPercentage}%<br>Severity [moderate] ==> ${config.severity.moderate.deficitPercentage}%<br>Severity [severe] ==> ${config.severity.severe.deficitPercentage}%`;
+        `Severity [moderate] ==> ${config.severity.moderate.deficitPercentage}%<br>Severity [severe] ==> ${config.severity.severe.deficitPercentage}%`;
 
       /**
        * Shows the working calculation for the deficit percentage.
@@ -193,8 +186,10 @@ const calculateVariables = (data) => {
      * @returns {Object} - An object containing deficit volume, formula, limit, working calculation, and capped status.
      */
     const calculateVolume = () => {
+      console.error("############## percentage.val:", percentage.val);
+
       const capsMap = {
-        5: config.caps.deficit5,
+        7.5: config.caps.deficit7_5,
         10: config.caps.deficit10,
       };
 
