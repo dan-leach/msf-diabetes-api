@@ -58,23 +58,29 @@
     },
     "pH": {
       "min": 6.0,
-      "max": 7.5
+      "max": 7.5,
+      "diagnosticThreshold": 7.3,
+      "severeThreshold": 7.1
     },
     "bicarbonate": {
       "min": 0,
-      "max": 30
+      "max": 30,
+      "diagnosticThreshold": 15
     },
     "gcs": {
       "min": 3,
       "max": 15,
-      "severeThreshold": 7
+      "severeThreshold": 13,
+      "noBolusThreshold": 8
     },
     "glucose": {
       "min": 3,
-      "max": 50
+      "max": 50,
+      "diagnosticThreshold": 11.1
     },
     "bloodKetones": {
-      "min": 3
+      "min": 3,
+      "max": 4
     },
     "urineKetones": {
       "min": 2
