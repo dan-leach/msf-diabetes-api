@@ -160,10 +160,10 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
     data.bloodKetones = data.bloodKetones || null;
     data.urineKetones = data.urineKetones || null;
 
-    /*
     //generate a new unique auditID
     const auditID = await generateAuditID();
 
+    /*
     //encrypt the data
     const encryptedData = encrypt({
       protocolStartDatetime: data.protocolStartDatetime,
@@ -194,7 +194,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
 */
     //respond to the client with the auditID and the calculations
     res.json({
-      //auditID,
+      auditID,
       calculations,
     });
   } catch (error) {

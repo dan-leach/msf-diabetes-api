@@ -27,11 +27,16 @@
     "url": "https://api.msf.dka-calculator.co.uk/",
     "timeoutDuration": 15000,
     "showConsole": true,
-    "tables": {
-      "calculate": "tbl_data_v0",
-      "update": "tbl_update_v0",
-      "sodiumOsmo": "tbl_sodiumOsmo_v0",
-      "decrypt": "tbl_decrypt"
+    "database": {
+      "name": "msfdiabetes_data_v0",
+      "users": {
+        "select": "msfdiabetes_app_select",
+        "insert": "msfdiabetes_app_insert"
+      },
+      "tables": {
+        "calculate": "tbl_calculate",
+        "decrypt": "tbl_decrypt"
+      }
     }
   },
   "client": {
@@ -96,7 +101,7 @@
       },
       "deficitPercentage": 10
     },
-    "moderate": {
+    "standard": {
       "pHRange": {
         "upper": 7.3,
         "lower": 7.1
@@ -272,20 +277,5 @@
       ]
     },
     "max": 75
-  },
-  "indicatorCoordinates": {
-    "xAxisShock": {
-      "yes": 205,
-      "no": 358
-    },
-    "yAxisSeverity": {
-      "severe": 68,
-      "moderate": 103,
-      "mild": 138
-    },
-    "xAxisDiabetic": {
-      "yes": 200,
-      "no": 358
-    }
   }
 }
