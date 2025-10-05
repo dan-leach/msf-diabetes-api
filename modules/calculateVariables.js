@@ -456,24 +456,52 @@ const calculateVariables = (data) => {
    * Calculates the starting fluid rate by summing deficit and maintenance rates.
    * @returns {Object} - An object containing the calculated rate value, formula, and working calculation.
    */
-  const calculateStartingFluidRate = () => {
-    // Calculate the total starting fluid rate.
-    const val = deficit.rate.val + maintenance.rate.val;
+  const calculateBagSpeeds = () => {
+    // Calculate the full-speed fluid rate by summing deficit and maintenance rates.
+    const calculateFullSpeed = () => {
+      // Calculate the full-speed fluid rate in mL/hour.
+      const val = deficit.rate.val + maintenance.rate.val;
 
-    // Generate string showing the formula used to calculate the starting fluid rate.
-    const formula = "[Deficit replacement rate] + [Maintenance rate]";
+      // Generate string showing the formula used to calculate the full-speed fluid rate.
+      const formula = "[Deficit replacement rate] + [Maintenance rate]";
 
-    // Generate string showing the working calculation for the starting fluid rate.
-    const working = `[${deficit.rate.val.toFixed(
-      1
-    )}mL/hour] + [${maintenance.rate.val.toFixed(1)}mL/hour] = ${val.toFixed(
-      1
-    )}mL/hour`;
+      // Generate string showing the working calculation for the full-speed fluid rate.
+      const working = `[${deficit.rate.val.toFixed(
+        1
+      )}mL/hour] + [${maintenance.rate.val.toFixed(1)}mL/hour] = ${val.toFixed(
+        1
+      )}mL/hour`;
+
+      return {
+        val,
+        formula,
+        working,
+      };
+    };
+    const fullSpeed = calculateFullSpeed();
+
+    // Calculate the half-speed fluid rate as half the full-speed rate.
+    const halfSpeed = () => {
+      // Calculate the half-speed fluid rate in mL/hour.
+      const val = fullSpeed.val / 2;
+
+      // Generate string showing the formula used to calculate the half-speed fluid rate.
+      const formula = "[High speed rate] ÷ 2";
+
+      // Generate string showing the working calculation for the half-speed fluid rate.
+      const working = `[${fullSpeed.val.toFixed(1)}mL/hour] ÷ 2 = ${val.toFixed(
+        1
+      )}mL/hour`;
+      return {
+        val,
+        formula,
+        working,
+      };
+    };
 
     return {
-      val,
-      formula,
-      working,
+      fullSpeed,
+      halfSpeed: halfSpeed(),
     };
   };
 
@@ -578,7 +606,7 @@ const calculateVariables = (data) => {
     bolus: calculateBolus(),
     deficit,
     maintenance,
-    startingFluidRate: calculateStartingFluidRate(),
+    bagSpeeds: calculateBagSpeeds(),
     insulinRate: calculateInsulinRate(),
     insulinDose: calculateInsulinDose(),
     errors: errors,
