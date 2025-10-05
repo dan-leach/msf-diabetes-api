@@ -6,12 +6,51 @@ const config = require("../config.json");
  * @type {Array}
  */
 const calculateRules = [
+  //legal disclaimer
   check("legalAgreement")
     .isBoolean()
     .withMessage("Legal agreement field must be data type [boolean].")
     .bail() // Stop running validations if any of the previous ones have failed.
     .equals("true")
     .withMessage("You must agree to the legal disclaimer."),
+
+  //patient details
+  check("episodeType")
+    .isAlpha()
+    .withMessage(
+      "Episode type field must be data type [string], containing only alphabetical characters."
+    )
+    .bail()
+    .custom((value) => config.validation.episodeType.options.includes(value))
+    .withMessage("Invalid episode type option provided."),
+
+  check("patientSex")
+    .isAlpha()
+    .withMessage(
+      "Patient sex field must be data type [string], containing only alphabetical characters."
+    )
+    .bail()
+    .custom((value) => config.validation.patientSex.options.includes(value))
+    .withMessage("Invalid patient sex option provided."),
+
+  check("weight")
+    .isFloat({
+      min: config.validation.weight.min,
+      max: config.validation.weight.max,
+    })
+    .withMessage(
+      `Weight must be a valid number between ${config.validation.weight.min} and ${config.validation.weight.max}.`
+    ),
+
+  check("operationalCentre")
+    .isString()
+    .withMessage("Operational centre field must be data type [string].")
+    .escape(),
+
+  check("project")
+    .isString()
+    .withMessage("Project field must be data type [string].")
+    .escape(),
 
   check("patientAge")
     .custom((value) => {
@@ -30,120 +69,37 @@ const calculateRules = [
       `Patient age must be an decimal in the range ${config.validation.patientAge.min} to ${config.validation.patientAge.max}.`
     ),
 
-  check("patientSex")
-    .isString()
-    .withMessage("Patient sex field must be data type [string].")
-    .bail()
-    .custom((value) => ["male", "female"].includes(value))
-    .withMessage("Patient sex must be male or female."),
+  check("weightLimitOverride")
+    .isBoolean()
+    .withMessage("Weight limit override field must be data type [boolean]."),
 
-  check("protocolStartDatetime")
-    .isISO8601() // Validates the input as an ISO 8601 date
-    .withMessage("Protocol start datetime must be ISO8601 date format.")
-    .bail()
-    .custom((value) => {
-      const datetime = new Date(value);
-      const now = new Date();
-      const minDatetime = new Date(
-        now.getTime() -
-          config.validation.protocolStartDatetime.withinPastHours *
-            60 *
-            60 *
-            1000 - //minus 10 minutes to allow for time taken to fill in form
-          10 * 60 * 1000
-      );
+  check("use2SD")
+    .isBoolean()
+    .withMessage("Used 2SD weight function field must be data type [boolean]."),
 
-      if (datetime < minDatetime) {
-        throw new Error(
-          `Protocol start datetime must be within the last ${config.validation.protocolStartDatetime.withinPastHours} hours.`
-        );
-      }
+  //equipment availability
+  check("bloodGasAvailable")
+    .isBoolean()
+    .withMessage("Blood gas availability field must be data type [boolean]."),
 
-      const maxDatetime = new Date(
-        now.getTime() +
-          config.validation.protocolStartDatetime.withinFutureHours *
-            60 *
-            60 *
-            1000
-      );
-
-      if (datetime > maxDatetime) {
-        throw new Error(
-          `Protocol start datetime must no more than ${
-            config.validation.protocolStartDatetime.withinFutureHours
-          } ${
-            config.validation.protocolStartDatetime.withinFutureHours === 1
-              ? "hour"
-              : "hours"
-          } in the future.`
-        );
-      }
-
-      return true;
-    }),
-
-  check("pH")
-    .optional()
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error("pH field must be data type [float].");
-      }
-      return true;
-    })
-    .bail()
-    .isFloat({
-      min: config.validation.pH.min,
-      max: config.validation.pH.max,
-    })
+  check("bloodKetonesAvailable")
+    .isBoolean()
     .withMessage(
-      `pH must be in range ${config.validation.pH.min} to ${config.validation.pH.max}.`
+      "Blood ketones availability field must be data type [boolean]."
     ),
 
-  check("bicarbonate")
-    .optional()
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error("Bicarbonate field must be data type [float].");
-      }
-      return true;
-    })
-    .bail()
-    .isFloat({
-      min: config.validation.bicarbonate.min,
-      max: config.validation.bicarbonate.max,
-    })
+  check("syringeDriverAvailable")
+    .isBoolean()
     .withMessage(
-      `Bicarbonate must be in range ${config.validation.bicarbonate.min} to ${config.validation.bicarbonate.max}.`
+      "Syringe driver availability field must be data type [boolean]."
     ),
 
-  check("gcs")
-    .custom((value) => {
-      const num = Number(value);
-
-      if (!Number.isInteger(num)) {
-        throw new Error("GCS field must be data type [integer].");
-      }
-
-      return true;
-    })
-    .bail()
-    .isFloat({
-      min: config.validation.gcs.min,
-      max: config.validation.gcs.max,
-    })
-    .withMessage(
-      `GCS must be in range ${config.validation.gcs.min} to ${config.validation.gcs.max}.`
-    ),
-
+  //clinical details
   check("glucose")
     .custom((value) => {
       //use custom validator as isFloat will accept numbers with string datatype
       if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error(
-          "If provided, glucose field must be data type [float]."
-        );
+        throw new Error("Glucose field must be data type [float].");
       }
       return true;
     })
@@ -153,7 +109,7 @@ const calculateRules = [
       max: config.validation.glucose.max,
     })
     .withMessage(
-      `If provided, glucose must be in range ${config.validation.glucose.min} to ${config.validation.glucose.max}.`
+      `Glucose must be in range ${config.validation.glucose.min} to ${config.validation.glucose.max}.`
     ),
 
   check("bloodKetones")
@@ -194,63 +150,81 @@ const calculateRules = [
       `If provided, urine ketones must be at least ${config.validation.urineKetones.min}+ (the diagnostic threshold for DKA).`
     ),
 
-  check("weight")
+  check("diagnosticFeatures")
+    .isBoolean()
+    .withMessage("Diagnostic features field must be data type [boolean].")
+    .bail()
+    .equals("true")
+    .withMessage("Diagnosis requires clinical features of DKA."),
+
+  check("pH")
+    .optional()
+    .custom((value) => {
+      //use custom validator as isFloat will accept numbers with string datatype
+      if (typeof value !== "number" || !Number.isFinite(value)) {
+        throw new Error("pH field must be data type [float].");
+      }
+      return true;
+    })
+    .bail()
     .isFloat({
-      min: config.validation.weight.min,
-      max: config.validation.weight.max,
+      min: config.validation.pH.min,
+      max: config.validation.pH.max,
     })
     .withMessage(
-      `Weight must be a valid number between ${config.validation.weight.min} and ${config.validation.weight.max}.`
+      `pH must be in range ${config.validation.pH.min} to ${config.validation.pH.max}.`
     ),
 
-  check("weightLimitOverride")
-    .isBoolean()
-    .withMessage("Weight limit override field must be data type [boolean]."),
-
-  check("use2SD")
-    .isBoolean()
-    .withMessage("Used 2SD weight function field must be data type [boolean]."),
+  check("bicarbonate")
+    .optional()
+    .custom((value) => {
+      //use custom validator as isFloat will accept numbers with string datatype
+      if (typeof value !== "number" || !Number.isFinite(value)) {
+        throw new Error("Bicarbonate field must be data type [float].");
+      }
+      return true;
+    })
+    .bail()
+    .isFloat({
+      min: config.validation.bicarbonate.min,
+      max: config.validation.bicarbonate.max,
+    })
+    .withMessage(
+      `Bicarbonate must be in range ${config.validation.bicarbonate.min} to ${config.validation.bicarbonate.max}.`
+    ),
 
   check("shockPresent")
     .isBoolean()
     .withMessage("Clinical shock status field must be data type [boolean]."),
 
-  check("insulinRate")
-    .isFloat()
-    .withMessage("Insulin rate field must be data type [float].")
-    .bail()
-    .custom((value) => config.validation.insulinRate.options.includes(value))
-    .withMessage("Invalid insulin rate option provided."),
+  check("gcs")
+    .if(body("shockPresent").equals("false")) //optional if shockPresent is true
+    .custom((value) => {
+      const num = Number(value);
 
-  check("preExistingDiabetes")
-    .isBoolean()
+      if (!Number.isInteger(num)) {
+        throw new Error("GCS field must be data type [integer].");
+      }
+
+      return true;
+    })
+    .bail()
+    .isFloat({
+      min: config.validation.gcs.min,
+      max: config.validation.gcs.max,
+    })
     .withMessage(
-      "Pre-existing diabetes status field must be data type [boolean]."
+      `GCS must be in range ${config.validation.gcs.min} to ${config.validation.gcs.max}.`
     ),
 
-  check("underFollowUp")
-    .if(body("preExistingDiabetes").equals("true"))
+  check("respiratorySupport")
+    //optional if shockPresent is true or if gcs is <13
+    .if(body("shockPresent").equals("false"))
+    .if(body("gcs").isFloat({ min: config.validation.gcs.severeThreshold }))
     .isBoolean()
-    .withMessage("Under follow up field must be data type [boolean]."),
-
-  check("episodeType")
-    .isAlpha()
     .withMessage(
-      "Episode type field must be data type [string], containing only alpha characters."
-    )
-    .bail()
-    .custom((value) => config.validation.episodeType.options.includes(value))
-    .withMessage("Invalid episode type option provided."),
-
-  check("operationalCentre")
-    .isString()
-    .withMessage("Operational centre field must be data type [string].")
-    .escape(),
-
-  check("project")
-    .isString()
-    .withMessage("Project field must be data type [string].")
-    .escape(),
+      "Respiratory support status field must be data type [boolean]."
+    ),
 
   check("appVersion")
     .isObject()
@@ -275,58 +249,6 @@ const calculateRules = [
     .escape(),
 ];
 
-const sodiumOsmoRules = [
-  check("sodium")
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error("Sodium value must be data type [float].");
-      }
-      return true;
-    })
-    .isFloat({
-      min: config.validation.sodium.min,
-      max: config.validation.sodium.max,
-    })
-    .withMessage(
-      `Sodium value must be between ${config.validation.sodium.min} and ${config.validation.sodium.max} mmol/L.`
-    ),
-
-  check("glucose")
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error("Glucose value must be data type [float].");
-      }
-      return true;
-    })
-    .isFloat({
-      min: config.validation.glucose.min,
-      max: config.validation.glucose.max,
-    })
-    .withMessage(
-      `Glucose value must be between ${config.validation.glucose.min} and ${config.validation.glucose.max} mmol/L.`
-    ),
-
-  check("clientUseragent")
-    .isString()
-    .withMessage("Client useragent field must be data type [string].")
-    .escape(),
-
-  check("appVersion")
-    .isObject()
-    .withMessage("App version field must be data type [object].")
-    .bail()
-    .custom((obj) =>
-      Object.values(obj).every(
-        (value) => typeof value === "string" && /^[a-zA-Z0-9 .]+$/.test(value)
-      )
-    )
-    .withMessage(
-      "Each app version property value must be data type [string], containing stop and alphanumeric characters only."
-    ),
-];
-
 // Middleware function to validate the request
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
@@ -338,6 +260,5 @@ const validateRequest = (req, res, next) => {
 
 module.exports = {
   calculateRules,
-  sodiumOsmoRules,
   validateRequest,
 };

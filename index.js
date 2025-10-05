@@ -132,7 +132,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
       );
     }
 
-    //limit decimal age to 2 decimal places after checkWeighWithinLimit
+    //limit decimal age to 2 decimal places after checkWeightWithinLimit
     data.patientAge = data.patientAge.toFixed(2);
 
     //get the IP address of the client request
@@ -159,7 +159,6 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
     data.bicarbonate = data.bicarbonate || null;
     data.bloodKetones = data.bloodKetones || null;
     data.urineKetones = data.urineKetones || null;
-    data.underFollowUp = data.underFollowUp || null;
 
     /*
     //generate a new unique auditID
@@ -242,65 +241,6 @@ app.get("/decrypt", async (req, res) => {
     res.json("Decrypt run");
   } catch (error) {
     handleError(error, 500, "/decrypt", "Failed to decrypt", res);
-  }
-});
-
-/**
- * @route POST /sodium-osmo
- * @summary Calculates and stores sodium and osmolality metrics for patient data.
- *
- * @description This endpoint receives a POST request with sodium and glucose levels, performs calculations,
- * and updates the database with the computed values:
- * - Validates the request data with `sodiumOsmoRules` and `validateRequest`.
- * - Computes corrected sodium and effective osmolality using `calculateCorrectedSodium` and `calculateEffectiveOsmolality`.
- * - Stores the results in the database along with the client IP.
- * - Returns the calculated values to the client.
- *
- * @requires ./modules/sodiumOsmo - Module for corrected sodium and effective osmolality calculations.
- * @requires ./modules/insertData - Module to insert calculated data into the database.
- *
- * @param {object} req - The request object, with validated data.
- * @param {object} req.body - Contains patient data fields including sodium and glucose levels.
- * @param {object} res - The response object to send calculation results or errors.
- *
- * @returns {object} 200 - JSON object with calculated `correctedSodium` and `effectiveOsmolality`.
- * @returns {object} 500 - JSON object with error message if a server error occurs.
- */
-app.post("/sodium-osmo", sodiumOsmoRules, validateRequest, async (req, res) => {
-  try {
-    const {
-      calculateCorrectedSodium,
-      calculateEffectiveOsmolality,
-    } = require("./modules/sodiumOsmo");
-    const { insertSodiumOsmoData } = require("./modules/insertData");
-
-    const data = matchedData(req);
-
-    //get the IP address of the client request
-    const clientIP = req.ip;
-
-    //perform the calculations
-    const calculations = {
-      correctedSodium: calculateCorrectedSodium(data.sodium, data.glucose),
-      effectiveOsmolality: calculateEffectiveOsmolality(
-        data.sodium,
-        data.glucose
-      ),
-    };
-
-    //update the database with new data
-    await insertSodiumOsmoData(data, calculations, clientIP);
-
-    //return the calculations to the client
-    res.status(200).json(calculations);
-  } catch (error) {
-    handleError(
-      error,
-      500,
-      "/sodium-osmo",
-      "Failed to perform calculations",
-      res
-    );
   }
 });
 

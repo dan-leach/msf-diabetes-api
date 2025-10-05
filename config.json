@@ -44,17 +44,31 @@
     }
   },
   "validation": {
+    "episodeType": {
+      "options": ["real", "test"]
+    },
+    "patientSex": {
+      "options": ["male", "female"]
+    },
+    "weight": {
+      "min": 2,
+      "max": 150
+    },
     "patientAge": {
       "min": 0,
       "max": 19.01
     },
-    "patientAgeMonths": {
-      "min": 0,
-      "max": 228
+    "glucose": {
+      "min": 3,
+      "max": 50,
+      "diagnosticThreshold": 11.1
     },
-    "protocolStartDatetime": {
-      "withinPastHours": 24,
-      "withinFutureHours": 1
+    "bloodKetones": {
+      "min": 3,
+      "max": 4
+    },
+    "urineKetones": {
+      "min": 2
     },
     "pH": {
       "min": 6.0,
@@ -70,44 +84,8 @@
     "gcs": {
       "min": 3,
       "max": 15,
-      "severeThreshold": 13,
-      "noBolusThreshold": 8
-    },
-    "glucose": {
-      "min": 3,
-      "max": 50,
-      "diagnosticThreshold": 11.1
-    },
-    "bloodKetones": {
-      "min": 3,
-      "max": 4
-    },
-    "urineKetones": {
-      "min": 2
-    },
-    "sodium": {
-      "min": 100,
-      "max": 200
-    },
-    "weight": {
-      "min": 2,
-      "max": 150
-    },
-    "insulinRate": {
-      "options": [0.05, 0.1]
-    },
-    "insulinDeliveryMethod": {
-      "options": ["pen", "pump"]
-    },
-    "episodeType": {
-      "options": ["real", "test"]
-    },
-    "auditID": {
-      "length": 6
-    },
-    "protocolEndDatetime": {
-      "withinPastYears": 1,
-      "withinFutureMinutes": 60
+      "severeThreshold": 12,
+      "noBolusThreshold": 7
     }
   },
   "severity": {
@@ -134,14 +112,22 @@
     "deficit7_5": 5625,
     "bolus": 750,
     "glucoseBolus": 150,
-    "hhsBolus": 1500,
-    "insulin01": 7.5,
-    "insulin005": 3.75
+    "insulinRate01": 7.5,
+    "insulinRate005": 3.75,
+    "insulinDose02": 15,
+    "insulinDose01": 7.5
   },
-  "mlsPerKg": {
-    "bolus": 10,
-    "glucose": 2,
-    "hhs": 20
+  "bolus": {
+    "mlsPerKg": 10,
+    "duration": {
+      "shock": 0.25,
+      "noShock": 1
+    }
+  },
+  "insulin": {
+    "ageThreshold": 2,
+    "rateOptions": [0.05, 0.1],
+    "doseOptions": [0.1, 0.2]
   },
   "deficitReplacementDuration": 48,
   "operationalCentres": [
