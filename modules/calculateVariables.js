@@ -46,8 +46,12 @@ const calculateVariables = (data) => {
           `pH of ${data.pH} and bicarbonate of ${data.bicarbonate} mmol/L does not meet the diagnostic threshold for DKA.`
         );
       } else if (data.bloodKetones || data.urineKetones) {
-        if (data.gcs <= config.validation.gcs.severeThreshold) return "severe";
-        if (data.shockPresent) return "severe";
+        if (
+          data.gcs <= config.validation.gcs.severeThreshold ||
+          data.shockPresent == "true" ||
+          data.respiratorySupport == "true"
+        )
+          return "severe";
         return "standard";
       } else {
         throw new Error(
@@ -251,90 +255,97 @@ const calculateVariables = (data) => {
      * Calculates the deficit volume based on the deficit percentage and patient weight.
      * @returns {Object} - An object containing deficit volume, formula, limit, working calculation, and capped status.
      */
-    const calculateVolume = () => {
-      const capsMap = {
-        7.5: config.caps.deficit7_5,
-        10: config.caps.deficit10,
-      };
-
+    const calculateStandardSpeedVolume = () => {
       // Calculate the uncapped deficit volume.
-      const uncapped = percentage.val * weight * 10;
-
-      /**
-       * Provides the capped deficit volume limit.
-       * @returns {number|boolean} - The capped deficit volume in mL or false if unable to select the cap.
-       */
-      const calculateCapped = () => {
-        if (capsMap.hasOwnProperty(percentage.val)) {
-          return capsMap[percentage.val];
-        } else {
-          throw new Error(
-            `Unable to select deficit volume cap using deficit percentage [${percentage.val}].`
-          );
-        }
-      };
-      const capped = calculateCapped();
+      const uncapped = config.severity.standard.deficitPercentage * weight * 10;
 
       // Check if the uncapped deficit volume exceeds the cap.
-      const isCapped = uncapped > capped;
+      const isCapped = uncapped > config.caps.deficitStandard;
 
       // Calculate the deficit volume to use, selecting between capped or uncapped volumes.
-      const val = isCapped ? capped : uncapped;
+      const val = isCapped ? deficitStandard : uncapped;
 
       // Generate string showing formula used to calculate the deficit volume.
-      const formula = "[Deficit percentage] x [Patient weight] x 10";
-
-      /**
-       * Generate string showing deficit volume limit based on percentage.
-       * @returns {string} - The deficit volume limit in mL.
-       */
-      const calculateLimit = () => {
-        if (capsMap.hasOwnProperty(percentage.val)) {
-          return `${capsMap[percentage.val]} mL (for ${
-            percentage.val
-          }% deficit)`;
-        } else {
-          throw new Error(
-            `Unable to generate deficit volume limit string using deficit percentage [${percentage.val}].`
-          );
-        }
-      };
+      const formula =
+        "[Deficit percentage (for standard DKA)] x [Patient weight] x 10";
 
       /**
        * Shows the working calculation for the deficit volume.
        * @returns {string} - A string showing the detailed calculation.
        */
-      const working = `[${percentage.val}%] x [${weight.toFixed(
-        1
-      )} kg] x 10 = ${isCapped ? "<s>" : ""}${uncapped.toFixed(0)}mL${
-        isCapped ? "</s>" : ""
-      } ${isCapped ? "(exceeds limit)" : ""}`;
+      const working = `[${
+        config.severity.standard.deficitPercentage
+      }%] x [${weight.toFixed(1)} kg] x 10 = ${
+        isCapped ? "<s>" : ""
+      }${uncapped.toFixed(0)}mL${isCapped ? "</s>" : ""} ${
+        isCapped ? "(exceeds limit)" : ""
+      }`;
 
       return {
         val,
         formula,
-        limit: calculateLimit(),
+        limit: config.caps.deficitStandard,
         working: working,
         isCapped: isCapped,
       };
     };
-    const volume = calculateVolume();
+    const standardSpeedVolume = calculateStandardSpeedVolume();
+
+    /**
+     * FOR HIGH-SPEED HYPOGLYCAMIA REGIME: Calculates the deficit volume based on the deficit percentage and patient weight.
+     * @returns {Object} - An object containing deficit volume, formula, limit, working calculation, and capped status.
+     */
+    const calculateHighSpeedVolume = () => {
+      // Calculate the uncapped deficit volume.
+      const uncapped = config.severity.severe.deficitPercentage * weight * 10;
+
+      // Check if the uncapped deficit volume exceeds the cap.
+      const isCapped = uncapped > config.caps.deficitSevere;
+
+      // Calculate the deficit volume to use, selecting between capped or uncapped volumes.
+      const val = isCapped ? config.caps.deficitSevere : uncapped;
+
+      // Generate string showing formula used to calculate the deficit volume.
+      const formula =
+        "[Deficit percentage (for severe DKA)] x [Patient weight] x 10";
+
+      /**
+       * Shows the working calculation for the deficit volume.
+       * @returns {string} - A string showing the detailed calculation.
+       */
+      const working = `[${
+        config.severity.severe.deficitPercentage
+      }%] x [${weight.toFixed(1)} kg] x 10 = ${
+        isCapped ? "<s>" : ""
+      }${uncapped.toFixed(0)}mL${isCapped ? "</s>" : ""} ${
+        isCapped ? "(exceeds limit)" : ""
+      }`;
+
+      return {
+        val,
+        formula,
+        limit: config.caps.deficitSevere,
+        working: working,
+        isCapped: isCapped,
+      };
+    };
+    const highSpeedVolume = calculateHighSpeedVolume();
 
     /**
      * Calculates the rate at which the fluid deficit should be replaced.
      * @returns {Object} - An object containing the rate, formula, and working calculation.
      */
-    const calculateRate = () => {
+    const calculateRate = (vol) => {
       const replacementDuration = config.deficitReplacementDuration;
       //Calculate the fluid replacement rate in mL/hour.
-      const val = volumeToRate(volume.val, replacementDuration);
+      const val = volumeToRate(vol, replacementDuration);
 
       // Generate string showing the formula used to calculate the fluid replacement rate.
       const formula =
         "[Deficit volume] ÷ [deficit replacement duration in hours]";
 
       // Generate string showing the working calculation for the fluid replacement rate.
-      const working = `[${volume.val.toFixed(
+      const working = `[${vol.toFixed(
         0
       )}mL] ÷ [${replacementDuration} hours] = ${val.toFixed(1)}mL/hour`;
 
@@ -347,8 +358,10 @@ const calculateVariables = (data) => {
 
     return {
       percentage,
-      volume,
-      rate: calculateRate(),
+      standardSpeedVolume,
+      standardSpeedRate: calculateRate(standardSpeedVolume.val),
+      highSpeedVolume,
+      highSpeedRate: calculateRate(highSpeedVolume.val),
     };
   };
   const deficit = calculateDeficit();
@@ -457,18 +470,22 @@ const calculateVariables = (data) => {
    * @returns {Object} - An object containing the calculated rate value, formula, and working calculation.
    */
   const calculateBagSpeeds = () => {
-    // Calculate the full-speed fluid rate by summing deficit and maintenance rates.
-    const calculateFullSpeed = () => {
-      // Calculate the full-speed fluid rate in mL/hour.
-      const val = deficit.rate.val + maintenance.rate.val;
+    // Calculate the speed fluid rate by summing deficit and maintenance rates.
+    const calculateSpeed = (
+      deficitRate,
+      maintenanceRate,
+      deficitPercentage
+    ) => {
+      // Calculate the speed fluid rate in mL/hour.
+      const val = deficitRate + maintenanceRate;
 
-      // Generate string showing the formula used to calculate the full-speed fluid rate.
-      const formula = "[Deficit replacement rate] + [Maintenance rate]";
+      // Generate string showing the formula used to calculate the fluid rate.
+      const formula = `[Deficit replacement rate for ${deficitPercentage}% deficit] + [Maintenance rate]`;
 
-      // Generate string showing the working calculation for the full-speed fluid rate.
-      const working = `[${deficit.rate.val.toFixed(
+      // Generate string showing the working calculation for the fluid rate.
+      const working = `[${deficitRate.toFixed(
         1
-      )}mL/hour] + [${maintenance.rate.val.toFixed(1)}mL/hour] = ${val.toFixed(
+      )}mL/hour] + [${maintenanceRate.toFixed(1)}mL/hour] = ${val.toFixed(
         1
       )}mL/hour`;
 
@@ -478,18 +495,29 @@ const calculateVariables = (data) => {
         working,
       };
     };
-    const fullSpeed = calculateFullSpeed();
 
-    // Calculate the half-speed fluid rate as half the full-speed rate.
-    const halfSpeed = () => {
+    const standardSpeed = calculateSpeed(
+      deficit.standardSpeedRate.val,
+      maintenance.rate.val,
+      config.severity.standard.deficitPercentage
+    );
+
+    const highSpeed = calculateSpeed(
+      deficit.highSpeedRate.val,
+      maintenance.rate.val,
+      config.severity.severe.deficitPercentage
+    );
+
+    // Calculate the half-speed fluid rate.
+    const calculateHalfSpeed = (fullSpeed) => {
       // Calculate the half-speed fluid rate in mL/hour.
-      const val = fullSpeed.val / 2;
+      const val = fullSpeed / 2;
 
       // Generate string showing the formula used to calculate the half-speed fluid rate.
-      const formula = "[High speed rate] ÷ 2";
+      const formula = "[Full speed rate] ÷ 2";
 
-      // Generate string showing the working calculation for the half-speed fluid rate.
-      const working = `[${fullSpeed.val.toFixed(1)}mL/hour] ÷ 2 = ${val.toFixed(
+      // Generate string showing the working calculation for the half-standard-speed fluid rate.
+      const working = `[${fullSpeed.toFixed(1)}mL/hour] ÷ 2 = ${val.toFixed(
         1
       )}mL/hour`;
       return {
@@ -499,9 +527,25 @@ const calculateVariables = (data) => {
       };
     };
 
+    let isSevere;
+    if (severity.val === "severe") {
+      isSevere = true;
+    } else if (severity.val === "standard") {
+      isSevere = false;
+    } else {
+      throw new Error(
+        "Unable to select between standard-speed and high-speed fluid regimes: severity undefined."
+      );
+    }
+
     return {
-      fullSpeed,
-      halfSpeed: halfSpeed(),
+      standardSpeed: isSevere ? null : standardSpeed,
+      halfStandardSpeed: isSevere
+        ? null
+        : calculateHalfSpeed(standardSpeed.val),
+      highSpeed: isSevere ? highSpeed : null,
+      halfHighSpeed: isSevere ? calculateHalfSpeed(highSpeed.val) : null,
+      hypoSpeed: highSpeed,
     };
   };
 

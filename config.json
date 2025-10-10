@@ -121,8 +121,8 @@
   "caps": {
     "weight": 75,
     "maintenance": 2600,
-    "deficit10": 7500,
-    "deficit7_5": 5625,
+    "deficitSevere": 7500,
+    "deficitStandard": 5625,
     "bolus": 750,
     "glucoseBolus": 150,
     "insulinRate01": 7.5,
@@ -143,6 +143,10 @@
     "doseOptions": [0.1, 0.2]
   },
   "deficitReplacementDuration": 48,
+  "bagSpeedGlucoseThresholds": {
+    "mg/dL": [270, 145, 70],
+    "mmol/L": [15, 8, 4]
+  },
   "operationalCentres": [
     {
       "name": "Paris",
