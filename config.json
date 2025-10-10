@@ -64,9 +64,17 @@
       "max": 19.01
     },
     "glucose": {
-      "min": 3,
-      "max": 50,
-      "diagnosticThreshold": 11.1
+      "units": {
+        "mg/dL": {
+          "min": 200,
+          "max": 900,
+          "default": true
+        },
+        "mmol/L": {
+          "min": 11.1,
+          "max": 50
+        }
+      }
     },
     "bloodKetones": {
       "min": 3,

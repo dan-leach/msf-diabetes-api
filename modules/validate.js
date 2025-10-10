@@ -53,14 +53,6 @@ const calculateRules = [
     .escape(),
 
   check("patientAge")
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error("Patient age field must be data type [number].");
-      }
-      return true;
-    })
-    .bail()
     .isFloat({
       min: config.validation.patientAge.min,
       max: config.validation.patientAge.max,
@@ -95,59 +87,47 @@ const calculateRules = [
     ),
 
   //clinical details
+  check("glucoseUnit")
+    .isIn(config.validation.glucose.units)
+    .withMessage("Invalid glucose unit option provided."),
+
   check("glucose")
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error("Glucose field must be data type [float].");
-      }
-      return true;
-    })
+    .isFloat()
+    .withMessage("Glucose field must be data type [float].")
     .bail()
-    .isFloat({
-      min: config.validation.glucose.min,
-      max: config.validation.glucose.max,
-    })
-    .withMessage(
-      `Glucose must be in range ${config.validation.glucose.min} to ${config.validation.glucose.max}.`
-    ),
+    .custom((value, { req }) => {
+      const unit = req.body.glucoseUnit;
+      if (!config.validation.glucose.units.hasOwnProperty(unit))
+        throw new Error("Invalid glucose unit option provided.");
+
+      if (
+        value < config.validation.glucose.units[unit].min ||
+        value > config.validation.glucose.units[unit].max
+      ) {
+        throw new Error(
+          `Glucose must be in range ${config.validation.glucose.units[unit].min} to ${config.validation.glucose.units[unit].max} ${unit}.`
+        );
+      }
+
+      return true;
+    }),
 
   check("bloodKetones")
     .if(body("urineKetones").equals(""))
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error(
-          "If provided, blood ketones field must be data type [float]."
-        );
-      }
-      return true;
-    })
-    .bail()
     .isFloat({
       min: config.validation.bloodKetones.min,
     })
     .withMessage(
-      `If provided, blood ketones must be at least ${config.validation.bloodKetones.min}mmol/L (the diagnostic threshold for DKA).`
+      `If provided, blood ketones must be a decimal at least ${config.validation.bloodKetones.min}mmol/L (the diagnostic threshold for DKA).`
     ),
 
   check("urineKetones")
     .if(body("bloodKetones").equals(""))
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error(
-          "If provided, urine ketones field must be data type [integer]."
-        );
-      }
-      return true;
-    })
-    .bail()
-    .isFloat({
+    .isInt({
       min: config.validation.urineKetones.min,
     })
     .withMessage(
-      `If provided, urine ketones must be at least ${config.validation.urineKetones.min}+ (the diagnostic threshold for DKA).`
+      `If provided, urine ketones must be an integer at least ${config.validation.urineKetones.min}+ (the diagnostic threshold for DKA).`
     ),
 
   check("diagnosticFeatures")
@@ -159,38 +139,22 @@ const calculateRules = [
 
   check("pH")
     .optional()
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error("pH field must be data type [float].");
-      }
-      return true;
-    })
-    .bail()
     .isFloat({
       min: config.validation.pH.min,
       max: config.validation.pH.max,
     })
     .withMessage(
-      `pH must be in range ${config.validation.pH.min} to ${config.validation.pH.max}.`
+      `pH must be a decimal in the range ${config.validation.pH.min} to ${config.validation.pH.max}.`
     ),
 
   check("bicarbonate")
     .optional()
-    .custom((value) => {
-      //use custom validator as isFloat will accept numbers with string datatype
-      if (typeof value !== "number" || !Number.isFinite(value)) {
-        throw new Error("Bicarbonate field must be data type [float].");
-      }
-      return true;
-    })
-    .bail()
     .isFloat({
       min: config.validation.bicarbonate.min,
       max: config.validation.bicarbonate.max,
     })
     .withMessage(
-      `Bicarbonate must be in range ${config.validation.bicarbonate.min} to ${config.validation.bicarbonate.max}.`
+      `Bicarbonate must be a decimal in the range ${config.validation.bicarbonate.min} to ${config.validation.bicarbonate.max}.`
     ),
 
   check("shockPresent")
@@ -199,22 +163,12 @@ const calculateRules = [
 
   check("gcs")
     .if(body("shockPresent").equals("false")) //optional if shockPresent is true
-    .custom((value) => {
-      const num = Number(value);
-
-      if (!Number.isInteger(num)) {
-        throw new Error("GCS field must be data type [integer].");
-      }
-
-      return true;
-    })
-    .bail()
     .isFloat({
       min: config.validation.gcs.min,
       max: config.validation.gcs.max,
     })
     .withMessage(
-      `GCS must be in range ${config.validation.gcs.min} to ${config.validation.gcs.max}.`
+      `GCS must be an integer in the range ${config.validation.gcs.min} to ${config.validation.gcs.max}.`
     ),
 
   check("respiratorySupport")
