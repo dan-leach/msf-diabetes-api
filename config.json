@@ -77,11 +77,11 @@
       }
     },
     "bloodKetones": {
-      "min": 3,
-      "max": 4
+      "min": 3
     },
     "urineKetones": {
-      "min": 2
+      "min": 2,
+      "max": 4
     },
     "pH": {
       "min": 6.0,

@@ -581,7 +581,7 @@ const calculateVariables = (data) => {
     const working = `
       The insulin rate (in Units/hour) is calculated by multiplying the weight-based rate (in Units/kg/hour) by the patient weight (provided value: <strong>${weight.toFixed(
         1
-      )}kg</strong>.<br><br> The relevant weight-based rate is based on the patient age (provided value: ${
+      )}kg</strong>).<br><br> The relevant weight-based rate is based on the patient age (provided value: ${
       data.patientAge
     } years):
       <ul><li>Age <${config.insulin.ageThreshold} years = ${
