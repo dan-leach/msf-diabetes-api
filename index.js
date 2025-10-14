@@ -134,9 +134,6 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
     //limit decimal age to 2 decimal places after checkWeightWithinLimit
     data.patientAge = data.patientAge.toFixed(2);
 
-    //get the IP address of the client request
-    const clientIP = req.ip;
-
     //perform the calculations and check for errors
     const calculations = calculateVariables(data);
     try {
@@ -163,6 +160,13 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
 
     //generate a new unique auditID
     const auditID = await generateAuditID();
+
+    //get the IP address of the client request
+    const clientIP = req.ip;
+
+    data.appVersion.api = process.env.apiVersion;
+
+    data.serverCalculations = true;
 
     //encrypt the data
     const encryptedData = encrypt({

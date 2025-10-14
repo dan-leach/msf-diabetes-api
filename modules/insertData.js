@@ -21,7 +21,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
     // Prepare SQL statement
     const sql = `
       INSERT INTO ${config.api.database.tables.calculate} (
-        auditID, episodeType, appVersion, legalAgreement, operationalCentre, project, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringeDriverAvailable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        auditID, episodeType, appVersion, serverCalculations, legalAgreement, operationalCentre, project, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringeDriverAvailable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     // Execute SQL statement
@@ -29,9 +29,11 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
       auditID,
       data.episodeType,
       data.appVersion,
+      data.serverCalculations,
       data.legalAgreement,
       data.operationalCentre,
       data.project,
+      data.clientUseragent,
       clientIP,
       encryptedData,
       data.weightLimitOverride,

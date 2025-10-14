@@ -193,10 +193,6 @@ const calculateRules = [
       "Each app version property value must be data type [string], containing stop and alphanumeric characters only."
     ),
 
-  check("clientDatetime")
-    .isISO8601() // Validates the input as an ISO 8601 date
-    .withMessage("Client datetime must be ISO8601 date format."),
-
   check("clientUseragent")
     .isString()
     .withMessage("Client useragent field must be data type [string].")
