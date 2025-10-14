@@ -17,6 +17,7 @@ var cors = require("cors");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const { matchedData } = require("express-validator");
+const config = require("./config.json");
 const {
   validateRequest,
   calculateRules,
@@ -42,7 +43,7 @@ app.set("trust proxy", 3);
  */
 app.get("/", (req, res) => {
   res.send(
-    "Please go to <a href='https://msf.dka-calculator.co.uk/'>https://msf.dka-calculator.co.uk</a> instead."
+    `Please go to <a href='${config.client.url}'>${config.client.url}</a> instead.`
   );
 });
 
@@ -58,7 +59,6 @@ app.get("/", (req, res) => {
  */
 app.get("/config", (req, res) => {
   try {
-    const config = require("./config.json");
     config.client.version = process.env.clientVersion;
     config.api.version = process.env.apiVersion;
     config.lastUpdated = process.env.lastUpdated;
@@ -91,7 +91,6 @@ app.get("/config", (req, res) => {
  * @requires ./modules/calculateVariables - Module for calculating variables.
  * @requires ./modules/generateAuditID - Module for generating unique audit IDs.
  * @requires ./modules/insertData - Module for database insertion of calculation data.
- * @requires ./modules/getImdDecile - Module to retrieve IMD decile based on patient postcode.
  * @requires ./modules/checkWeightWithinLimit - Module to verify if patient weight is within limits.
  * @requires ./modules/encrypt - Module for encrypting calculated data before storage.
  *
@@ -159,39 +158,32 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
     data.bicarbonate = data.bicarbonate || null;
     data.bloodKetones = data.bloodKetones || null;
     data.urineKetones = data.urineKetones || null;
+    data.gcs = data.gcs || null;
+    data.respiratorySupport || null;
 
     //generate a new unique auditID
     const auditID = await generateAuditID();
 
-    /*
     //encrypt the data
     const encryptedData = encrypt({
-      protocolStartDatetime: data.protocolStartDatetime,
-      patientAge: data.patientAge,
       patientSex: data.patientSex,
-      pH: data.pH,
       weight: data.weight,
-      calculations: calculations,
+      patientAge: data.patientAge,
       glucose: data.glucose,
+      glucoseUnit: data.glucoseUnit,
       bloodKetones: data.bloodKetones,
       urineKetones: data.urineKetones,
-      weightLimitOverride: data.weightLimitOverride,
-      use2SD: data.use2SD,
+      diagnosticFeatures: data.diagnosticFeatures,
+      pH: data.pH,
+      bicarbonate: data.bicarbonate,
       shockPresent: data.shockPresent,
-      insulinRate: data.insulinRate,
-      preExistingDiabetes: data.preExistingDiabetes,
-      underFollowUp: data.underFollowUp,
+      gcs: data.gcs,
+      respiratorySupport: data.respiratorySupport,
     });
 
     //insert the data into the database
-    await insertCalculateData(
-      data,
-      encryptedData,
-      auditID,
-      patientHash,
-      clientIP
-    );
-*/
+    await insertCalculateData(data, encryptedData, auditID, clientIP);
+
     //respond to the client with the auditID and the calculations
     res.json({
       auditID,
