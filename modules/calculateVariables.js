@@ -207,9 +207,9 @@ const calculateVariables = (data) => {
 
       // Generate string showing working calculation for the bolus rate.
       const working = `
-        Bolus rate is calculated by dividing the bolus volume (calculated value: <strong>${
-          volume.val
-        }mL</strong>) by the bolus duration (in hours) (calculated value: <strong>${
+        Bolus rate is calculated by dividing the bolus volume (calculated value: <strong>${volume.val.toFixed(
+          1
+        )}mL</strong>) by the bolus duration (in hours) (calculated value: <strong>${
         duration.val
       }</strong> hours).<br><br>
         [${volume.val.toFixed(1)}mL] ÷ [${
@@ -339,7 +339,9 @@ const calculateVariables = (data) => {
 
       // Generate string showing the working calculation for the fluid replacement rate.
       const working = `
-        The deficit replacement rate is calculated by dividing the deficit volume (calculated value: <strong>${vol}mL</strong>) by the deficit replacement duration of ${replacementDuration} hours.<br><br>
+        The deficit replacement rate is calculated by dividing the deficit volume (calculated value: <strong>${vol.toFixed(
+          1
+        )}mL</strong>) by the deficit replacement duration of ${replacementDuration} hours.<br><br>
         [${vol.toFixed(
           0
         )}mL] ÷ [${replacementDuration} hours] = <strong>${val.toFixed(
@@ -407,9 +409,9 @@ const calculateVariables = (data) => {
           20mL/kg x ${weight - 20}kg = ${((weight - 20) * 20).toFixed(
           1
         )}mL<br><br>
-        1000 + 500 + ${((weight - 20) * 20).toFixed(1)} = <strong>${val.toFixed(
+        1000 + 500 + ${((weight - 20) * 20).toFixed(
           1
-        )}mL</strong>
+        )}kg = <strong>${val.toFixed(1)}mL</strong>
         `;
       } else if (weight > 10) {
         working += `
@@ -417,12 +419,12 @@ const calculateVariables = (data) => {
           50mL/kg x ${weight - 10}kg = ${((weight - 10) * 50).toFixed(
           1
         )}mL<br><br>
-          1000 + ${((weight - 10) * 50).toFixed(1)} = <strong>${val.toFixed(
+          1000 + ${((weight - 10) * 50).toFixed(1)}kg = <strong>${val.toFixed(
           1
         )}mL</strong>
         `;
       } else if (weight > config.validation.weight.min) {
-        working += `100mL/kg x ${weight} = <strong>${val.toFixed(
+        working += `100mL/kg x ${weight}kg = <strong>${val.toFixed(
           1
         )}mL</strong>`;
       } else {
