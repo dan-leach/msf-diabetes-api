@@ -1,98 +1,104 @@
 {
-  "appName": "Paediatric DKA Calculator",
-  "underDevelopment": false,
+  "appName": "MSF Diabetes Calculator",
+  "underDevelopment": true,
   "author": {
     "name": "Dan Leach",
     "url": "https://danleach.uk",
-    "email": "admin@dka-calculator.co.uk",
+    "email": "web@danleach.uk",
     "contributors": {
-      "current": "<a href='https://github.com/drJonathanFenwick/' target='_blank'>Jonathan Fenwick</a>, <a href='https://github.com/dannysimpson0912/' target='_blank'>Danny Simpson</a>, <a href='https://github.com/rspaull/' target='_blank'>Rob Spaull</a>, <a href='https://sec.stealthcopter.com/' target='_blank'>Mat Rollings</a>",
-      "url": "https://github.com/dan-leach/dka-calculator/wiki/Contributors"
+      "current": "tbc",
+      "url": "https://github.com/dan-leach/msf-diabetes/wiki/Contributors"
     }
   },
   "organisations": {
-    "bsped": {
-      "main": "https://www.bsped.org.uk",
-      "dkaGuidelines": "https://www.bsped.org.uk/clinical-resources/bsped-dka-guidelines/"
-    },
-    "ispad": "https://www.ispad.org"
+    "msf": {
+      "shortName": "MSF Foundation",
+      "fullName": "Médecins Sans Frontières Foundation",
+      "main": "https://fondation.msf.fr/",
+      "dkaGuidelines": "https://fondation.msf.fr/"
+    }
   },
   "disclaimer": "Decisions about patient care remain the treating clinician's responsibility.",
   "api": {
     "repo": {
-      "main": "https://github.com/dan-leach/dka-calculator-api",
-      "changelog": "https://github.com/dan-leach/dka-calculator-api/wiki/Changelog"
+      "main": "https://github.com/dan-leach/msf-diabetes-api",
+      "changelog": "https://github.com/dan-leach/msf-diabetes-api/wiki/Changelog"
     },
-    "url": "https://api.dka-calculator.co.uk/",
+    "url": "https://api.msf.dka-calculator.co.uk/",
     "timeoutDuration": 15000,
     "showConsole": true,
-    "tables": {
-      "calculate": "tbl_data_v2",
-      "update": "tbl_update_v2",
-      "sodiumOsmo": "tbl_sodiumOsmo_v2",
-      "decrypt": "tbl_decrypt"
+    "database": {
+      "name": "msfdiabetes_data_v0",
+      "users": {
+        "select": "msfdiabetes_app_select",
+        "insert": "msfdiabetes_app_insert"
+      },
+      "tables": {
+        "calculate": "tbl_calculate",
+        "decrypt": "tbl_decrypt"
+      }
     }
   },
   "client": {
-    "url": "https://dka-calculator.co.uk",
-    "sodiumOsmoUrl": "https://dka-calculator.co.uk/sodium-osmo",
+    "url": "https://msf.dka-calculator.co.uk",
+    "sodiumOsmoUrl": "https://msf.dka-calculator.co.uk/sodium-osmo",
     "repo": {
-      "main": "https://github.com/dan-leach/dka-calculator",
-      "changelog": "https://github.com/dan-leach/dka-calculator/wiki/Changelog",
-      "icpChangelog": "https://github.com/dan-leach/dka-calculator/wiki/Integrated-Care-Pathway-(ICP)-Changelog"
+      "main": "https://github.com/dan-leach/msf-diabetes",
+      "changelog": "https://github.com/dan-leach/msf-diabetes/wiki/Changelog",
+      "icpChangelog": "https://github.com/dan-leach/msf-diabetes/wiki/Integrated-Care-Pathway-(ICP)-Changelog"
     }
   },
   "validation": {
-    "patientAge": {
-      "min": 0,
-      "max": 19.01
+    "episodeType": {
+      "options": ["real", "test"]
     },
-    "patientAgeMonths": {
-      "min": 0,
-      "max": 228
-    },
-    "protocolStartDatetime": {
-      "withinPastHours": 24,
-      "withinFutureHours": 1
-    },
-    "pH": {
-      "min": 6.0,
-      "max": 7.5
-    },
-    "bicarbonate": {
-      "min": 0,
-      "max": 35
-    },
-    "glucose": {
-      "min": 3,
-      "max": 50
-    },
-    "ketones": {
-      "min": 3
-    },
-    "sodium": {
-      "min": 100,
-      "max": 200
+    "patientSex": {
+      "options": ["male", "female"]
     },
     "weight": {
       "min": 2,
       "max": 150
     },
-    "insulinRate": {
-      "options": [0.05, 0.1]
+    "patientAge": {
+      "min": 0,
+      "max": 19.01
     },
-    "insulinDeliveryMethod": {
-      "options": ["pen", "pump"]
+    "glucose": {
+      "units": {
+        "mg/dL": {
+          "min": 200,
+          "max": 900,
+          "default": true
+        },
+        "mmol/L": {
+          "min": 11.1,
+          "max": 50
+        }
+      }
     },
-    "episodeType": {
-      "options": ["real", "test"]
+    "bloodKetones": {
+      "min": 3
     },
-    "auditID": {
-      "length": 6
+    "urineKetones": {
+      "min": 2,
+      "max": 4
     },
-    "protocolEndDatetime": {
-      "withinPastYears": 1,
-      "withinFutureMinutes": 60
+    "pH": {
+      "min": 6.0,
+      "max": 7.5,
+      "diagnosticThreshold": 7.3,
+      "severeThreshold": 7.1
+    },
+    "bicarbonate": {
+      "min": 0,
+      "max": 30,
+      "diagnosticThreshold": 15
+    },
+    "gcs": {
+      "min": 3,
+      "max": 15,
+      "severeThreshold": 12,
+      "noBolusThreshold": 7
     }
   },
   "severity": {
@@ -101,360 +107,70 @@
         "upper": 7.1,
         "lower": 6.0
       },
-      "bicarbonateBelow": 5,
       "deficitPercentage": 10
     },
-    "moderate": {
-      "pHRange": {
-        "upper": 7.2,
-        "lower": 7.1
-      },
-      "bicarbonateBelow": 10,
-      "deficitPercentage": 5
-    },
-    "mild": {
+    "standard": {
       "pHRange": {
         "upper": 7.3,
-        "lower": 7.2
+        "lower": 7.1
       },
       "bicarbonateBelow": 15,
-      "deficitPercentage": 5
+      "deficitPercentage": 7.5
     }
   },
   "caps": {
     "weight": 75,
     "maintenance": 2600,
-    "deficit10": 7500,
-    "deficit5": 3750,
+    "deficitSevere": 7500,
+    "deficitStandard": 5625,
     "bolus": 750,
     "glucoseBolus": 150,
-    "hhsBolus": 1500,
-    "insulin01": 7.5,
-    "insulin005": 3.75
+    "insulinRate01": 7.5,
+    "insulinRate005": 3.75,
+    "insulinDose02": 15,
+    "insulinDose01": 7.5
   },
-  "mlsPerKg": {
-    "bolus": 10,
-    "glucose": 2,
-    "hhs": 20
+  "bolus": {
+    "mlsPerKg": 10,
+    "duration": {
+      "shock": 0.25,
+      "noShock": 1
+    }
+  },
+  "insulin": {
+    "ageThreshold": 2,
+    "rateOptions": [0.05, 0.1],
+    "doseOptions": [0.1, 0.2]
   },
   "deficitReplacementDuration": 48,
-  "regions": [
+  "bagSpeedGlucoseThresholds": {
+    "mg/dL": [270, 145, 70],
+    "mmol/L": [15, 8, 4]
+  },
+  "operationalCentres": [
     {
-      "name": "Northern Ireland",
-      "centres": [
-        "Altnagelvin Area Hospital, Londonderry",
-        "Antrim Area Hospital, Antrim",
-        "Causeway Hospital, Coleraine",
-        "Craigavon Area Hospital, Craigavon",
-        "Daisy Hill Hospital, Newry",
-        "Royal Belfast Hospital for Sick Children, Belfast",
-        "South West Acute Hospital, Enniskillen",
-        "Ulster Hospital, Dundonald"
-      ]
+      "name": "Paris",
+      "projects": ["OCP-12345-ProjectName", "OCP-67890-AnotherProject"]
     },
     {
-      "name": "Scotland",
-      "centres": [
-        "Lothian",
-        "Greater Glasgow",
-        "Wishaw",
-        "Borders",
-        "Ayrshire & Arran",
-        "Dumfries",
-        "Highlands",
-        "Grampian",
-        "Tayside",
-        "Fife",
-        "Forth Valley"
-      ]
+      "name": "Amsterdam",
+      "projects": ["OCA-12345-ProjectName", "OCA-67890-AnotherProject"]
     },
     {
-      "name": "Wales",
-      "centres": [
-        "Bronglais General Hospital",
-        "Glan Clwyd Hospital",
-        "Glangwili General Hospital",
-        "Grange University Hospital",
-        "Morriston Hospital",
-        "Neath Port Talbot Hospital",
-        "Prince Charles Hospital",
-        "Princess of Wales Hospital",
-        "Royal Glamorgan Hospital",
-        "University Hospital of Wales",
-        "Withybush General Hospital",
-        "Wrexham Maelor Hospital",
-        "Ysbyty Gwynedd"
-      ]
+      "name": "Geneva",
+      "projects": ["OCG-12345-ProjectName", "OCG-67890-AnotherProject"]
     },
     {
-      "name": "East Midlands",
-      "centres": [
-        "Boston Pilgrim Hospital",
-        "Chesterfield Royal",
-        "Derby Hospitals",
-        "Grantham and District Hospital",
-        "Kettering General Hospital",
-        "Leicester Royal Infirmary",
-        "Lincoln County Hospital",
-        "Northampton General Hospital",
-        "Nottingham University Hospitals",
-        "Sherwood Forest Hospitals"
-      ]
+      "name": "Barcelona-Athens",
+      "projects": ["OCBA-12345-ProjectName", "OCBA-67890-AnotherProject"]
     },
     {
-      "name": "East of England",
-      "centres": [
-        "Addenbrookes Hospital",
-        "Basildon and Thurrock University Hospital",
-        "Bedford Hospital",
-        "Broomfield Hospital",
-        "Colchester Hospital",
-        "East & North Herts",
-        "Hinchingbrooke Health Care",
-        "Ipswich Hospital",
-        "James Paget University Hospital",
-        "Luton & Dunstable University Hospital",
-        "Norfolk & Norwich University Hospital",
-        "Peterborough City Hospital",
-        "Princess Alexandra Hospital",
-        "Queen Elizabeth Hospital Kings Lynn",
-        "Queen Elizabeth II Hospital",
-        "Southend University Hospital",
-        "Watford General Hospital",
-        "West Suffolk Hospital"
-      ]
+      "name": "Brussels",
+      "projects": ["OCB-12345-ProjectName", "OCB-67890-AnotherProject"]
     },
     {
-      "name": "North East and North Cumbria",
-      "centres": [
-        "Bishop Aukland Hospital",
-        "Darlington Memorial Hospital",
-        "Friarage Hospital",
-        "Great North Children's Hospital",
-        "North Tyneside General Hospital",
-        "Queen Elizabeth Hospital",
-        "South Tyneside District Hospital",
-        "Sunderland Royal Hospital",
-        "The Cumberland Infirmary",
-        "The James Cook University Hospital",
-        "University Hospital of Hartlepool",
-        "University Hospital of North Durham",
-        "University Hospital of North Tees",
-        "West Cumberland Hospital"
-      ]
-    },
-    {
-      "name": "North West",
-      "centres": [
-        "Alder Hey Children’s",
-        "Blackpool Teaching Hospitals",
-        "Bolton",
-        "Central Manchester University Hospitals",
-        "Countess of Chester Hospital",
-        "East Cheshire",
-        "East Lancashire Hospitals",
-        "Lancashire Teaching Hospitals",
-        "Mid Cheshire Hospitals",
-        "Salford Royal",
-        "Southport and Ormskirk Hospital",
-        "St Helens and Knowsley Teaching Hospitals",
-        "Stockport",
-        "Tameside & Glossop Integrated Care",
-        "The Pennine Acute Hospitals",
-        "University Hospital of South Manchester",
-        "University Hospitals of Morecambe Bay",
-        "Warrington and Halton Hospitals",
-        "Wirral University Teaching Hospital",
-        "Wrightington Wigan and Leigh"
-      ]
-    },
-    {
-      "name": "South East Coast and London Partnership",
-      "centres": [
-        "Barnet General Hospital",
-        "Buckland Hospital",
-        "Central Middlesex",
-        "Chelsea and Westminster",
-        "Conquest Hospital",
-        "Croydon University Hospital",
-        "Darent Valley Hospital",
-        "Ealing Hospital",
-        "East Surrey Hospital",
-        "Eastbourne District General Hospital",
-        "Epsom Hospital",
-        "Evelina London Children’s Hospital",
-        "Frimley Park Hospital",
-        "Great Ormond Street Hospital for Children",
-        "Hillingdon Hospitals",
-        "Kent and Canterbury Hospital",
-        "King George Hospital",
-        "King's College Hospital",
-        "Kingston Hospital",
-        "Lewisham Hospital",
-        "Maidstone Hospital",
-        "Medway Maritime Hospital",
-        "Newham University Hospital",
-        "North Middlesex University Hospital",
-        "Northwick Park",
-        "Princess Royal University Hospital",
-        "Queen Elizabeth Hospital",
-        "Queen Elizabeth The Queen Mother Hospital",
-        "Queen Mary's Hospital",
-        "Queen's Hospital",
-        "Royal Alexandra Children's Hospital",
-        "Royal Free London",
-        "Royal Surrey County Hospital",
-        "Royal Victoria Hospital",
-        "St George’s Hospital",
-        "St Helier Hospital",
-        "St. Mary’s Hospital",
-        "St. Peter's Hospital",
-        "St. Richards Hospital",
-        "The Royal London Hospital",
-        "The Whittington Hospital",
-        "Tunbridge Wells Hospital",
-        "University College Hospital",
-        "West Middlesex University Hospital",
-        "Whipps Cross University Hospital",
-        "William Harvey Hospital",
-        "Worthing Hospital"
-      ]
-    },
-    {
-      "name": "South West",
-      "centres": [
-        "Gloucestershire Hospitals",
-        "Great Western Hospitals",
-        "North Bristol",
-        "Northern Devon Hospital",
-        "Plymouth Hospitals",
-        "Royal Cornwall Hospitals",
-        "Royal Devon and Exeter Hospitals",
-        "Royal United Hospitals Bath",
-        "South Devon Healthcare",
-        "Taunton and Somerset",
-        "University Hospitals Bristol",
-        "Yeovil District Hospital"
-      ]
-    },
-    {
-      "name": "Thames Valley",
-      "centres": [
-        "Frimley Health",
-        "John Radcliffe Hospital",
-        "Milton Keynes Hospital",
-        "Royal Berkshire",
-        "Stoke Mandeville Hospital",
-        "Wycombe Hospital"
-      ]
-    },
-    {
-      "name": "Wessex",
-      "centres": [
-        "Basingstoke and North Hampshire Hospital",
-        "Dorset County Hospital",
-        "Poole Hospital",
-        "Queen Alexandra Hospital",
-        "Royal Hampshire County Hospital",
-        "Salisbury District Hospital",
-        "Southampton General Hospital",
-        "St. Mary's Hospital"
-      ]
-    },
-    {
-      "name": "West Midlands",
-      "centres": [
-        "Alexandra Hospital",
-        "Birmingham Children’s Hospital",
-        "Birmingham City Hospital",
-        "Burton Hospitals",
-        "County Hospital (Stafford)",
-        "County Hospital (Wye Valley)",
-        "George Eliot Hospital",
-        "Good Hope Hospital",
-        "Heartlands Hospital",
-        "Hospital of St Cross",
-        "Kidderminster Hospital",
-        "New Cross Hospital",
-        "Princess Royal Hospital",
-        "Royal Shrewsbury Hospital",
-        "Royal Stoke University Hospital",
-        "Russells Hall Hospital",
-        "Sandwell General Hospital",
-        "Solihull Hospital",
-        "South Warwickshire",
-        "University Hospital Coventry",
-        "Walsall Manor Hospital",
-        "Worcestershire Royal Hospital"
-      ]
-    },
-    {
-      "name": "Yorkshire and Humber",
-      "centres": [
-        "Airedale General Hospital",
-        "Barnsley Hospital",
-        "Bassetlaw Hospital",
-        "Bradford Royal Infirmary",
-        "Calderdale Royal Hospital",
-        "Dewsbury and District Hospital",
-        "Diana, Princess of Wales Hospital",
-        "Doncaster Royal Infirmary",
-        "Harrogate District Hospital",
-        "Huddersfield Royal Infirmary",
-        "Hull Royal Infirmary",
-        "Leeds Children's Hospital",
-        "Pinderfields General Hospital",
-        "Pontefract General Infirmary",
-        "Rotherham Hospital",
-        "Scarborough Hospital",
-        "Scunthorpe General Hospital",
-        "Sheffield Children's Hospital",
-        "St.Luke's Hospital",
-        "The York Hospital"
-      ]
-    }
-  ],
-  "ethnicGroups": [
-    {
-      "name": "Asian or Asian British",
-      "subgroups": [
-        "Indian",
-        "Pakistani",
-        "Bangladeshi",
-        "Chinese",
-        "Any other Asian background"
-      ]
-    },
-    {
-      "name": "Black, Black British, Caribbean or African",
-      "subgroups": [
-        "Caribbean",
-        "African",
-        "Any other Black, Black British, or Caribbean background"
-      ]
-    },
-    {
-      "name": "Mixed or multiple ethnic groups",
-      "subgroups": [
-        "White and Black Caribbean",
-        "White and Black African",
-        "White and Asian",
-        "Any other Mixed or multiple ethnic background"
-      ]
-    },
-    {
-      "name": "White",
-      "subgroups": [
-        "English, Welsh, Scottish, Northern Irish or British",
-        "Irish",
-        "Gypsy or Irish Traveller",
-        "Roma",
-        "Any other White background"
-      ]
-    },
-    {
-      "name": "Other ethnic group",
-      "subgroups": ["Arab", "Any other ethnic group"]
+      "name": "West and Central Africa",
+      "projects": ["WACA-12345-ProjectName", "WACA-67890-AnotherProject"]
     }
   ],
   "weightLimits": {
@@ -573,20 +289,5 @@
       ]
     },
     "max": 75
-  },
-  "indicatorCoordinates": {
-    "xAxisShock": {
-      "yes": 205,
-      "no": 358
-    },
-    "yAxisSeverity": {
-      "severe": 68,
-      "moderate": 103,
-      "mild": 138
-    },
-    "xAxisDiabetic": {
-      "yes": 200,
-      "no": 358
-    }
   }
 }

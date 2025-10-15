@@ -13,14 +13,14 @@ async function generateAuditID() {
   try {
     const connection = await mysql.createConnection({
       host: "localhost",
-      user: process.env.selectUser,
-      password: process.env.selectKey,
-      database: "dkacalcu_dka_database",
+      user: config.api.database.users.select,
+      password: process.env.app_select_key,
+      database: config.api.database.name,
     });
     while (!isUnique) {
       auditID = generateRandomID(6, permittedChars);
       const [rows] = await connection.execute(
-        `SELECT * FROM ${config.api.tables.calculate} WHERE auditID = ?`,
+        `SELECT * FROM ${config.api.database.tables.calculate} WHERE auditID = ?`,
         [auditID]
       );
 

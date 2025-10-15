@@ -11,6 +11,7 @@
  *
  * @exports encrypt - Function that encrypts data using AES-256-GCM and secures the AES key with RSA encryption.
  */
+
 const crypto = require("crypto");
 
 // Load RSA Public Key (for encrypting AES keys)

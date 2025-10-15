@@ -18,57 +18,48 @@ const calculateVariables = (data) => {
   const volumeToRate = (volume, unitTime) => volume / unitTime;
 
   /**
-   * Determines the severity of the condition based on pH and bicarbonate levels.
-   * @returns {string|boolean} - Severity level ("severe", "moderate", "mild") or false if no valid severity is found.
+   * Determines the severity of the condition based onpH, bicarbonate, urine ketones or blood ketones.
+   * @returns {string|boolean} - Severity level ("severe", "standard") or false if no valid severity is found.
    */
   const calculateSeverity = () => {
     /**
-     * Gets the severity based on pH and bicarbonate.
+     * Gets the severity based on pH, bicarbonate, urine ketones or blood ketones.
      * @returns {string} - The severity grade if matched, otherwise false.
      */
     const calculateVal = () => {
-      /**
-       * Checks if the given pH and bicarbonate values fall within the range for a specific severity level.
-       * @param {Object} levelConfig - Configuration for the severity level.
-       * @returns {string|false} - Severity level if matched, otherwise false.
-       */
-      const checkSeverityLevel = (levelConfig) => {
-        const { pHRange, bicarbonateBelow } = levelConfig;
-
+      if (data.pH && (data.bloodKetones || data.urineKetones)) {
+        // Must check that ketones are also present
+        if (data.pH < config.severity.severe.pHRange.upper) {
+          return "severe";
+        }
         if (
-          (data.pH < pHRange.upper && data.pH >= pHRange.lower) ||
-          (typeof data.bicarbonate !== undefined &&
-            data.bicarbonate < bicarbonateBelow)
+          data.bicarbonate &&
+          data.bicarbonate < config.severity.standard.bicarbonateBelow
         ) {
-          return levelConfig.severity;
+          return "standard";
         }
-
-        return false;
-      };
-
-      // Severity levels configuration
-      const severityLevels = [
-        { severity: "severe", ...config.severity.severe },
-        { severity: "moderate", ...config.severity.moderate },
-        { severity: "mild", ...config.severity.mild },
-      ];
-
-      // Check each severity level
-      for (const levelConfig of severityLevels) {
-        const result = checkSeverityLevel(levelConfig);
-        if (result) {
-          return result;
+        if (data.pH < config.severity.standard.pHRange.upper) {
+          return "standard";
         }
+        // Log error if no valid severity is found
+        throw new Error(
+          `pH of ${data.pH} and bicarbonate of ${data.bicarbonate}mmol/L does not meet the diagnostic threshold for DKA.`
+        );
+      } else if (data.bloodKetones || data.urineKetones) {
+        if (
+          data.gcs <= config.validation.gcs.severeThreshold ||
+          data.shockPresent == "true" ||
+          data.respiratorySupport == "true"
+        )
+          return "severe";
+        return "standard";
+      } else {
+        throw new Error(
+          "Insufficient data to determine DKA severity: pH, blood ketones or urine ketones required."
+        );
       }
-
-      // Log error if no valid severity is found
-      throw new Error(
-        `pH of ${data.pH} and bicarbonate of ${data.bicarbonate} mmol/L does not meet the diagnostic threshold for DKA.`
-      );
     };
     const val = calculateVal();
-
-    const formula = `pH [>=${config.severity.mild.pHRange.lower} and <${config.severity.mild.pHRange.upper}] or bicarbonate [<${config.severity.mild.bicarbonateBelow}mmol/L] ==> mild<br>pH [>=${config.severity.moderate.pHRange.lower} and <${config.severity.moderate.pHRange.upper}] or bicarbonate [<${config.severity.moderate.bicarbonateBelow}mmol/L] ==> moderate<br>pH [>=${config.severity.severe.pHRange.lower} and <${config.severity.severe.pHRange.upper}] or bicarbonate [<${config.severity.severe.bicarbonateBelow}mmol/L] ==> severe<br>(if bicarbonate and pH return different severity levels, most severe option is used)`;
 
     /**
      * Generates a string showing the working used to find the severity level.
@@ -76,114 +67,185 @@ const calculateVariables = (data) => {
      */
     const working = () => {
       if (!val) return false;
-      let working = `pH [${data.pH}] is [>=${config.severity[val].pHRange.lower} and <${config.severity[val].pHRange.upper}] `;
-      if (data.bicarbonate)
-        working += `or bicarbonate [${data.bicarbonate}] is [<${config.severity[val].bicarbonateBelow}mmol/L] `;
-      working += `==> ${val}`;
+      let working;
+      if (data.pH) {
+        working = `Since pH ${
+          data.bicarbonate ? "and bicarbonate have " : "has "
+        }been provided use these (rather than clinical severity indicators) to select severity.<br>`;
+        if (data.pH >= config.severity.standard.pHRange.upper) {
+          //pH too high,therefore check bicarb
+          if (data.bicarbonate < config.severity.standard.bicarbonateBelow) {
+            //Bicarb diagnostic
+            working += `pH of ${data.pH} is above upper limit of ${config.severity.standard.pHRange.upper}, but bicarbonate of ${data.bicarbonate}mmol/L is below upper limit of ${config.severity.standard.bicarbonateBelow} mmol/L.<br>Therefore, severity is ${val}.`;
+          } else {
+            //pH and bicarb too high
+            throw new Error("Unable to generate working for severity.");
+          }
+        } else if (
+          data.pH < config.severity.standard.pHRange.upper &&
+          data.pH >= config.severity.standard.pHRange.lower
+        ) {
+          //pH in standard range
+          working += `pH of <strong>${data.pH}</strong> is within the range ${config.severity.standard.pHRange.lower} to <${config.severity.standard.pHRange.upper}.<br>Therefore, severity is <strong>${val}</strong>.`;
+        } else if (
+          data.pH < config.severity.severe.pHRange.upper &&
+          data.pH >= config.severity.severe.pHRange.lower
+        ) {
+          //pH in severe range
+          working += `pH of <strong>${data.pH}</strong> is within the range ${config.severity.severe.pHRange.lower} to <${config.severity.severe.pHRange.upper}.<br>Therefore, severity is <strong>${val}</strong>.`;
+        } else {
+          //pH not in expected range
+          throw new Error("Unable to generate working for severity.");
+        }
+      } else {
+        working = `In the absence of blood gas data, severity is decided using clinical indicators.<br><br>DKA is severe if any of these features are present, or standard if all are absent:<ul><li>Shock (provided value: <strong>${
+          data.shockPresent
+        }</strong>)</li><li>GCS <${
+          config.validation.gcs.severeThreshold + 1
+        } (provided value: <strong>${
+          data.gcs
+        }</strong>)</li><li>On supplementary O<sub>2</sub> or respiratory support (provided value: <strong>${
+          data.respiratorySupport
+        }</strong>)</li></ul>Therefore, severity is <strong>${val}</strong>.`;
+      }
       return working;
     };
 
     return {
       val,
-      formula,
       working: working(),
     };
   };
   const severity = calculateSeverity();
 
   /**
-   * Calculates the bolus volume based on patient weight and a given mL/kg rate.
-   * @returns {Object} - An object containing the bolus volume, formula, limit, and other details.
+   * Calculates the bolus volume and rate based on patient weight and severity.
+   * @returns {Object} - An object containing bolus volume and rate calculations.
    */
-  const calculateBolusVolume = () => {
-    const weight = data.weight;
-    const mlsPerKg = config.mlsPerKg.bolus;
-    const cap = config.caps.bolus;
+  const calculateBolus = () => {
+    /**
+     * Calculates the bolus volume based on patient weight and a given mL/kg rate.
+     * @returns {Object} - An object containing the bolus volume, formula, limit, and other details.
+     */
+    const calculateVolume = () => {
+      const mlsPerKg = config.bolus.mlsPerKg;
+      const cap = config.caps.bolus;
 
-    // Calculate the uncapped bolus volume based on mL/kg.
-    const uncapped = weight * mlsPerKg;
+      // Calculate the uncapped bolus volume based on mL/kg.
+      const raw = weight * mlsPerKg;
 
-    // Checks if the uncapped bolus volume exceeds the cap.
-    const isCapped = uncapped > cap;
+      // Determines if no bolus should be given based on GCS and shock presence.
+      const noBolus =
+        data.gcs <= config.validation.gcs.noBolusThreshold &&
+        !data.shockPresent;
 
-    // Select the bolus volume to use between capped or uncapped volumes.
-    const val = isCapped ? cap : uncapped;
+      // Checks if the uncapped bolus volume exceeds the cap.
+      const isCapped = raw > cap;
 
-    // Generate string showing formula used to calculate the bolus volume.
-    const formula = `[${mlsPerKg}mL/kg] x [Patient weight (kg)]`;
+      // Select the bolus volume to use between capped or uncapped volumes.
+      let val = isCapped ? cap : raw;
 
-    // Generate string showing the bolus volume cap with units.
-    const limit = `${cap}mL`;
+      // Override bolus volume to 0 if no bolus criteria are met.
+      if (noBolus) val = 0;
 
-    // Generate string showing working calculation for the bolus volume.
-    const working = `[${mlsPerKg}mL/kg] x [${weight.toFixed(1)}kg] = ${
-      isCapped ? "<s>" : ""
-    }${uncapped.toFixed(0)}mL${isCapped ? "</s>" : ""} ${
-      isCapped ? "(exceeds limit)" : ""
-    }`;
+      // Generate string showing working calculation for the bolus volume.
+      let working = `
+        The default bolus is ${mlsPerKg}mL/kg x weight in kilograms (provided value: <strong>${weight}kg</strong>) = ${raw.toFixed(
+        1
+      )}mL<br><br>
+        The default bolus is overriden in the following circumstances:
+        <ul><li>No bolus is given if GCS <=${
+          config.validation.gcs.noBolusThreshold
+        } (provided value: <strong>${
+        data.gcs
+      }</strong>) and the patient is not shocked (provided value: <strong>${
+        data.shockPresent ? "shocked" : "not shocked"
+      }</strong>)</li>
+        <li>The bolus is capped if it exceeds the limit of ${cap}mL (based on ${mlsPerKg}mL/kg for ${
+        config.caps.weight
+      }kg patient)</li></ul>
+        The calculated bolus is therefore <strong>${val.toFixed(1)}mL</strong>.
+      `;
+
+      return {
+        val,
+        working,
+      };
+    };
+    const volume = calculateVolume();
+
+    const calculateDuration = () => {
+      // Get the bolus duration in hours based on shock status.
+      const val = data.shockPresent
+        ? config.bolus.duration.shock
+        : config.bolus.duration.noShock;
+
+      const working = `Bolus duration is linked to the presence of shock:<ul><li>Shocked = ${
+        config.bolus.duration.shock * 60
+      } minutes</li><li>Not shocked = ${
+        config.bolus.duration.noShock * 60
+      } minutes</li></ul>Patient is <strong>${
+        data.shockPresent ? "shocked" : "not shocked"
+      }</strong>, therefore bolus duration is <strong>${
+        val * 60
+      }</strong> minutes.`;
+
+      return {
+        val,
+        working,
+      };
+    };
+    const duration = calculateDuration();
+
+    /**
+     * Calculates the bolus rate based on the bolus volume and severity.
+     * @returns {Object} - An object containing the bolus rate, duration, formula, and working calculation.
+     */
+    const calculateRate = () => {
+      // Calculate the bolus rate in mL/hour.
+      const val = volumeToRate(volume.val, duration.val);
+
+      // Generate string showing working calculation for the bolus rate.
+      const working = `
+        Bolus rate is calculated by dividing the bolus volume (calculated value: <strong>${volume.val.toFixed(
+          1
+        )}mL</strong>) by the bolus duration (in hours) (calculated value: <strong>${
+        duration.val
+      }</strong> hours).<br><br>
+        [${volume.val.toFixed(1)}mL] ÷ [${
+        duration.val
+      } hours] = <strong>${val.toFixed(1)}mL/hour</strong>`;
+
+      return {
+        val,
+        working,
+      };
+    };
 
     return {
-      val,
-      mlsPerKg,
-      isCapped,
-      formula,
-      limit,
-      working,
+      volume,
+      duration,
+      rate: calculateRate(),
     };
   };
-  const bolusVolume = calculateBolusVolume();
 
   /**
    * Calculates the fluid deficit based on the severity of the condition and patient data.
    * @returns {Object} - An object containing deficit percentage, volume, and rate calculations.
    */
   const calculateDeficit = () => {
-    const pH = data.pH;
-    const bicarbonate = data.bicarbonate;
     /**
      * Determines the deficit percentage based on severity.
      * @returns {Object} - An object containing the deficit percentage, formula, and working calculation.
      */
     const calculatePercentage = () => {
-      /**
-       * Gets the deficit percentage based on severity.
-       * @returns {number} - The deficit percentage.
-       */
-      const calculateVal = () => {
-        const severityMap = {
-          severe: config.severity.severe.deficitPercentage,
-          moderate: config.severity.moderate.deficitPercentage,
-          mild: config.severity.mild.deficitPercentage,
-        };
-        if (severityMap.hasOwnProperty(severity.val)) {
-          return severityMap[severity.val];
-        } else {
-          throw new Error(
-            `Unable to select deficit percentage using severity rating [${severity.val}]`
-          );
-        }
-      };
-      const val = calculateVal();
+      const val = config.severity[severity.val].deficitPercentage;
 
-      /**
-       * Provides the formula used to determine the deficit percentage.
-       * @returns {string} - The formula for determining deficit percentage.
-       */
-      const calculateFormula = () =>
-        `Severity [mild] ==> ${config.severity.mild.deficitPercentage}%<br>Severity [moderate] ==> ${config.severity.moderate.deficitPercentage}%<br>Severity [severe] ==> ${config.severity.severe.deficitPercentage}%`;
-
-      /**
-       * Shows the working calculation for the deficit percentage.
-       * @returns {string} - A string showing the detailed calculation.
-       */
-      const calculateWorking = () => {
-        return `Severity [${severity.val}] ==> ${val}%`;
-      };
+      const working = `Deficit percentage is linked to severity:<ul><li>Standard DKA = ${config.severity.standard.deficitPercentage}% deficit</li><li>Severe DKA = ${config.severity.severe.deficitPercentage}% deficit</li></ul>Calculated severity is <strong>${severity.val}</strong>, therefore deficit is <strong>${val}%</strong>.`;
 
       return {
-        val: val,
-        formula: calculateFormula(),
-        working: calculateWorking(),
+        val,
+        working,
       };
     };
     const percentage = calculatePercentage();
@@ -192,136 +254,112 @@ const calculateVariables = (data) => {
      * Calculates the deficit volume based on the deficit percentage and patient weight.
      * @returns {Object} - An object containing deficit volume, formula, limit, working calculation, and capped status.
      */
-    const calculateVolume = () => {
-      const capsMap = {
-        5: config.caps.deficit5,
-        10: config.caps.deficit10,
-      };
-
+    const calculateStandardSpeedVolume = () => {
       // Calculate the uncapped deficit volume.
-      const uncapped = percentage.val * weight * 10;
+      const raw = config.severity.standard.deficitPercentage * weight * 10;
 
-      /**
-       * Provides the capped deficit volume limit.
-       * @returns {number|boolean} - The capped deficit volume in mL or false if unable to select the cap.
-       */
-      const calculateCapped = () => {
-        if (capsMap.hasOwnProperty(percentage.val)) {
-          return capsMap[percentage.val];
-        } else {
-          throw new Error(
-            `Unable to select deficit volume cap using deficit percentage [${percentage.val}].`
-          );
-        }
-      };
-      const capped = calculateCapped();
+      const cap = config.caps.deficitStandard;
 
       // Check if the uncapped deficit volume exceeds the cap.
-      const isCapped = uncapped > capped;
+      const isCapped = raw > cap;
 
       // Calculate the deficit volume to use, selecting between capped or uncapped volumes.
-      const val = isCapped ? capped : uncapped;
-
-      // Generate string showing formula used to calculate the deficit volume.
-      const formula = "[Deficit percentage] x [Patient weight] x 10";
-
-      /**
-       * Generate string showing deficit volume limit based on percentage.
-       * @returns {string} - The deficit volume limit in mL.
-       */
-      const calculateLimit = () => {
-        if (capsMap.hasOwnProperty(percentage.val)) {
-          return `${capsMap[percentage.val]} mL (for ${
-            percentage.val
-          }% deficit)`;
-        } else {
-          throw new Error(
-            `Unable to generate deficit volume limit string using deficit percentage [${percentage.val}].`
-          );
-        }
-      };
+      const val = isCapped ? cap : raw;
 
       /**
        * Shows the working calculation for the deficit volume.
        * @returns {string} - A string showing the detailed calculation.
        */
-      const working = `[${percentage.val}%] x [${weight.toFixed(
+      const working = `
+        The deficit volume is calculated by multiplying the deficit percentage (calculated value: <strong>${
+          config.severity.standard.deficitPercentage
+        }%</strong>) by patient weight (provided value: <strong>${weight}kg</strong>) by a factor of 10.<br><br>
+        [${config.severity.standard.deficitPercentage}%] x [${weight.toFixed(
         1
-      )} kg] x 10 = ${isCapped ? "<s>" : ""}${uncapped.toFixed(0)}mL${
-        isCapped ? "</s>" : ""
-      } ${isCapped ? "(exceeds limit)" : ""}`;
+      )}kg] x 10 = ${raw.toFixed(1)}mL<br><br>
+        The volume is capped if it exceeds the limit of ${cap}mL (based on deficit volume for ${
+        config.caps.weight
+      }kg patient).<br><br>
+        The calculated deficit volume is therefore <strong>${val.toFixed(
+          1
+        )}mL</strong>.`;
 
       return {
         val,
-        formula,
-        limit: calculateLimit(),
-        working: working,
-        isCapped: isCapped,
-      };
-    };
-    const volume = calculateVolume();
-
-    /**
-     * Calculates the deficit volume less the bolus volume.
-     * @returns {Object} - An object containing the volume less bolus, bolus to subtract, formula, and working calculation.
-     */
-    const calculateVolumeLessBolus = () => {
-      // Calculate the bolus volume to subtract based on clinical shock status.
-      const bolusToSubtract = data.shockPresent ? 0 : bolusVolume.val;
-
-      // Provides the deficit volume less bolus.
-      const val = volume.val - bolusToSubtract;
-
-      // Generate string showing formula used to calculate the volume less bolus.
-      const formula = `[Deficit volume] - [${config.mlsPerKg.bolus}mL/kg bolus (only for non-shocked patients)]`;
-
-      /**
-       * Shows the working calculation for the volume less bolus.
-       * @returns {string} - A string showing the detailed calculation.
-       */
-      const working = `[${volume.val.toFixed(
-        0
-      )}mL] - [${bolusToSubtract.toFixed(0)}mL] = ${val.toFixed(0)}mL`;
-
-      return {
-        bolusToSubtract,
-        val,
-        formula,
         working,
       };
     };
-    const volumeLessBolus = calculateVolumeLessBolus();
+    const standardSpeedVolume = calculateStandardSpeedVolume();
+
+    /**
+     * FOR HIGH-SPEED HYPOGLYCAMIA REGIME: Calculates the deficit volume based on the deficit percentage and patient weight.
+     * @returns {Object} - An object containing deficit volume, formula, limit, working calculation, and capped status.
+     */
+    const calculateHighSpeedVolume = () => {
+      // Calculate the uncapped deficit volume.
+      const raw = config.severity.severe.deficitPercentage * weight * 10;
+
+      const cap = config.caps.deficitSevere;
+
+      // Check if the uncapped deficit volume exceeds the cap.
+      const isCapped = raw > cap;
+
+      // Calculate the deficit volume to use, selecting between capped or uncapped volumes.
+      const val = isCapped ? cap : raw;
+
+      const working = `
+        The deficit volume is volume is calculated by multiplying the deficit percentage (calculated value: <strong>${
+          config.severity.severe.deficitPercentage
+        }%</strong>) by patient weight (provided value: <strong>${weight}kg</strong>) by a factor of 10.<br><br>
+        [${config.severity.severe.deficitPercentage}%] x [${weight.toFixed(
+        1
+      )}kg] x 10 = ${raw.toFixed(1)}mL<br><br>
+        The volume is capped if it exceeds the limit of ${cap}mL (based on deficit volume for ${
+        config.caps.weight
+      }kg patient).<br><br>
+        The calculated deficit volume is therefore <strong>${val.toFixed(
+          1
+        )}mL</strong>.`;
+
+      return {
+        val,
+        working,
+      };
+    };
+    const highSpeedVolume = calculateHighSpeedVolume();
 
     /**
      * Calculates the rate at which the fluid deficit should be replaced.
      * @returns {Object} - An object containing the rate, formula, and working calculation.
      */
-    const calculateRate = () => {
+    const calculateRate = (vol) => {
       const replacementDuration = config.deficitReplacementDuration;
       //Calculate the fluid replacement rate in mL/hour.
-      const val = volumeToRate(volumeLessBolus.val, replacementDuration);
-
-      // Generate string showing the formula used to calculate the fluid replacement rate.
-      const formula =
-        "[Deficit volume less bolus] ÷ [deficit replacement duration in hours]";
+      const val = volumeToRate(vol, replacementDuration);
 
       // Generate string showing the working calculation for the fluid replacement rate.
-      const working = `[${volumeLessBolus.val.toFixed(
-        0
-      )}mL] ÷ [${replacementDuration} hours] = ${val.toFixed(1)}mL/hour`;
+      const working = `
+        The deficit replacement rate is calculated by dividing the deficit volume (calculated value: <strong>${vol.toFixed(
+          1
+        )}mL</strong>) by the deficit replacement duration of ${replacementDuration} hours.<br><br>
+        [${vol.toFixed(
+          0
+        )}mL] ÷ [${replacementDuration} hours] = <strong>${val.toFixed(
+        1
+      )}mL/hour</strong>`;
 
       return {
         val,
-        formula,
         working,
       };
     };
 
     return {
-      percentage: percentage,
-      volume: volume,
-      volumeLessBolus: volumeLessBolus,
-      rate: calculateRate(),
+      percentage,
+      standardSpeedVolume,
+      standardSpeedRate: calculateRate(standardSpeedVolume.val),
+      highSpeedVolume,
+      highSpeedRate: calculateRate(highSpeedVolume.val),
     };
   };
   const deficit = calculateDeficit();
@@ -341,56 +379,69 @@ const calculateVariables = (data) => {
        * Calculates the uncapped maintenance volume.
        * @returns {number} - The uncapped maintenance volume in mL.
        */
-      const calculateUncapped = () => {
+      const calculateRaw = () => {
         if (weight < 10) return weight * 100;
         if (weight < 20) return (weight - 10) * 50 + 1000;
         return (weight - 20) * 20 + 1500;
       };
-      const uncapped = calculateUncapped();
+      const raw = calculateRaw();
 
       // Check if the uncapped maintenance volume exceeds the cap.
-      const isCapped = uncapped > cap;
+      const isCapped = raw > cap;
 
       // Calculate the maintenance volume to use, selecting between capped or uncapped volumes.
-      const val = isCapped ? cap : uncapped;
-
-      /**
-       * Provides the formula used to calculate the maintenance volume.
-       * @returns {string} - The formula for calculating the maintenance volume.
-       */
-      const calculateFormula = () => {
-        if (weight < 10) return "[Weight (kg)] x 100";
-        if (weight < 20) return "1000 + [(Weight (kg) - 10) x 50]";
-        return "1500 + [(Weight (kg) - 20) x 20]";
-      };
-
-      // Generate string showing the maintenance volume limit.
-      const limit = `${cap} mL`;
+      const val = isCapped ? cap : raw;
 
       /**
        * Shows the working calculation for the maintenance volume.
        * @returns {string} - A string showing the detailed calculation.
        */
-      const calculateWorking = () => {
-        const formatResult = (calculation) =>
-          `${calculation} = ${isCapped ? "<s>" : ""}${uncapped.toFixed(0)}mL${
-            isCapped ? "</s>" : ""
-          } ${isCapped ? "(exceeds limit)" : ""}`;
+      let working = `
+        The daily maintenance volume is based on the patient weight (provided value: <strong>${weight}kg</strong>):
+        <ul><li>100mL/kg for the first 10kg,</li>
+        <li>then 50mL/kg for the second 10kg,</li>
+        <li>then 20mL/kg for the remainder</li></ul>
+      `;
+      if (weight > 20) {
+        working += `
+          100mL/kg x 10kg = 1000.0mL<br>
+          50mL/kg x 10kg = 500.0mL<br>
+          20mL/kg x ${weight - 20}kg = ${((weight - 20) * 20).toFixed(
+          1
+        )}mL<br><br>
+        1000 + 500 + ${((weight - 20) * 20).toFixed(
+          1
+        )}kg = <strong>${val.toFixed(1)}mL</strong>
+        `;
+      } else if (weight > 10) {
+        working += `
+          100mL/kg x 10kg = 1000.0mL<br>
+          50mL/kg x ${weight - 10}kg = ${((weight - 10) * 50).toFixed(
+          1
+        )}mL<br><br>
+          1000 + ${((weight - 10) * 50).toFixed(1)}kg = <strong>${val.toFixed(
+          1
+        )}mL</strong>
+        `;
+      } else if (weight > config.validation.weight.min) {
+        working += `100mL/kg x ${weight}kg = <strong>${val.toFixed(
+          1
+        )}mL</strong>`;
+      } else {
+        throw new Error("Unable to generate maintenance volume working.");
+      }
 
-        if (weight < 10) {
-          return formatResult(`[${weight.toFixed(1)}kg] x 100`);
-        } else if (weight < 20) {
-          return formatResult(`1000 + [(${weight.toFixed(1)}kg - 10) x 50]`);
-        } else {
-          return formatResult(`1500 + [(${weight.toFixed(1)}kg - 20) x 20]`);
-        }
-      };
+      working += `<br><br>
+        The volume is capped if it exceeds the limit of ${cap}mL (based on maintenance volume for ${
+        config.caps.weight
+      }kg patient).<br><br>
+        The calculated daily maintenance volume is therefore <strong>${val.toFixed(
+          1
+        )}mL</strong>.`;
 
       return {
         val,
-        formula: calculateFormula(),
-        limit,
-        working: calculateWorking(),
+        working,
       };
     };
     const volume = calculateVolume();
@@ -403,23 +454,23 @@ const calculateVariables = (data) => {
       // Calculate the daily maintenance fluid rate in mL/hour.
       const val = volume.val / 24;
 
-      // Generate string showing the formula used to calculate the daily maintenance fluid rate.
-      const formula = "[Daily maintenance volume] ÷ 24 hours";
-
       // Generate string showing the working calculation for the daily maintenance fluid rate.
-      const working = `[${volume.val.toFixed(0)}mL] ÷ 24 hours = ${val.toFixed(
+      const working = `
+        The daily maintenance rate is calculated by dividing the daily maintenance volume (calculated value: <strong>${volume.val.toFixed(
+          1
+        )}mL</strong>) by 24 hours.<br><br>
+        [${volume.val.toFixed(0)}mL] ÷ 24 hours = <strong>${val.toFixed(
         1
-      )}mL/hour`;
+      )}mL/hour</strong>`;
 
       return {
         val,
-        formula,
         working,
       };
     };
 
     return {
-      volume: volume,
+      volume,
       rate: calculateRate(),
     };
   };
@@ -429,172 +480,208 @@ const calculateVariables = (data) => {
    * Calculates the starting fluid rate by summing deficit and maintenance rates.
    * @returns {Object} - An object containing the calculated rate value, formula, and working calculation.
    */
-  const calculateStartingFluidRate = () => {
-    // Calculate the total starting fluid rate.
-    const val = deficit.rate.val + maintenance.rate.val;
+  const calculateBagSpeeds = () => {
+    // Calculate the speed fluid rate by summing deficit and maintenance rates.
+    const calculateSpeed = (deficitRate, maintenanceRate) => {
+      // Calculate the speed fluid rate in mL/hour.
+      const val = deficitRate + maintenanceRate;
 
-    // Generate string showing the formula used to calculate the starting fluid rate.
-    const formula = "[Deficit replacement rate] + [Maintenance rate]";
+      // Generate string showing the working calculation for the fluid rate.
+      const working = `
+        The bag speed is calculated by summing the relevant deficit rate (calculated value: <strong>${deficitRate.toFixed(
+          1
+        )}mL/hour</strong>) with the daily maintenance rate (calculated value: <strong>${maintenanceRate.toFixed(
+        1
+      )}mL/hour</strong>).<br><br>
+        [${deficitRate.toFixed(1)}mL/hour] + [${maintenanceRate.toFixed(
+        1
+      )}mL/hour] = <strong>${val.toFixed(1)}mL/hour</strong>`;
 
-    // Generate string showing the working calculation for the starting fluid rate.
-    const working = `[${deficit.rate.val.toFixed(
-      1
-    )}mL/hour] + [${maintenance.rate.val.toFixed(1)}mL/hour] = ${val.toFixed(
-      1
-    )}mL/hour`;
+      return {
+        val,
+        working,
+      };
+    };
+
+    // Calculate the half-speed fluid rate by dividing by 2.
+    const calculateHalfSpeed = (rate) => {
+      // Calculate the speed fluid rate in mL/hour.
+      const val = rate / 2;
+
+      // Generate string showing the working calculation for the halffluid rate.
+      const working = `
+        The half bag speed is calculated by dividing the relevant rate (calculated value: <strong>${rate.toFixed(
+          1
+        )}mL/hour</strong>) by 2.<br><br>
+        [${rate.toFixed(1)}mL/hour] ÷ 2 = <strong>${val.toFixed(
+        1
+      )}mL/hour</strong>`;
+
+      return {
+        val,
+        working,
+      };
+    };
+
+    const standardSpeed = calculateSpeed(
+      deficit.standardSpeedRate.val,
+      maintenance.rate.val,
+      config.severity.standard.deficitPercentage
+    );
+
+    const highSpeed = calculateSpeed(
+      deficit.highSpeedRate.val,
+      maintenance.rate.val,
+      config.severity.severe.deficitPercentage
+    );
+
+    const hypoSpeed = highSpeed;
+    hypoSpeed.working =
+      `For managing hypoglycaemia the relevant deficit rate is as for severe DKA (i.e. using a deficit percentage of ${config.severity.severe.deficitPercentage}%). Therefore, if the actual DKA severity is standard the hypoglycaemia high-speed bag rate is faster than the standard-speed bag rate.<br><br>` +
+      hypoSpeed.working;
 
     return {
-      val,
-      formula,
-      working,
+      standardSpeed: severity.val === "severe" ? null : standardSpeed,
+      halfStandardSpeed:
+        severity.val === "severe"
+          ? null
+          : calculateHalfSpeed(standardSpeed.val),
+      highSpeed: severity.val === "severe" ? highSpeed : null,
+      halfHighSpeed:
+        severity.val === "severe" ? calculateHalfSpeed(highSpeed.val) : null,
+      hypoSpeed,
     };
   };
 
   /**
-   * Calculates the insulin rate based on patient weight and selected insulin rate.
+   * Calculates the IV insulin rate based on patient weight and age.
    * @returns {Object} - An object containing the calculated insulin rate, formula, limit, and working calculation.
    */
   const calculateInsulinRate = () => {
-    const insulinCapsMap = {
-      0.05: config.caps.insulin005,
-      0.1: config.caps.insulin01,
-    };
+    // Select rate based on patient age.
+    const rateUnitsPerKgPerHour =
+      data.patientAge < config.insulin.ageThreshold
+        ? config.insulin.rateOptions[0]
+        : config.insulin.rateOptions[1];
 
-    // Calculate the uncapped insulin rate based on patient weight and insulin rate.
-    const uncapped = data.insulinRate * weight;
+    // Select cap based on patient age.
+    const cap =
+      data.patientAge < config.insulin.ageThreshold
+        ? config.caps.insulinRate005
+        : config.caps.insulinRate01;
 
-    /**
-     * Determines the capped insulin rate based on the selected insulin rate option.
-     * @returns {number} - The capped insulin rate in Units/hour.
-     */
-    const calculateCapped = () => {
-      if (insulinCapsMap.hasOwnProperty(data.insulinRate)) {
-        return insulinCapsMap[data.insulinRate];
-      } else {
-        throw new Error(
-          `Unable to select insulin rate capped using insulin rate [${data.insulinRate}].`
-        );
-      }
-    };
-    const capped = calculateCapped();
+    // Calculate the uncapped insulin rate (in units/hr) based on patient weight and insulin rate in units/kg/hr.
+    const raw = rateUnitsPerKgPerHour * weight;
 
     // Check if the uncapped insulin rate exceeds the cap.
-    const isCapped = uncapped > capped;
+    const isCapped = raw > cap;
 
     // Calculate the insulin rate to use, selecting between capped or uncapped rates.
-    const val = isCapped ? capped : uncapped;
-
-    // Generate string showing the formula used to calculate the insulin rate.
-    const formula = "[Insulin rate (Units/kg/hour)] x [Patient weight]";
-
-    // Generate string showing the limit for the insulin rate based on the selected option.
-    const limit = `${capped} Units/hour (for ${data.insulinRate} Units/kg/hour)`;
+    const val = isCapped ? cap : raw;
 
     // Generate string showing the working calculation for the insulin rate.
-    const working = `[${data.insulinRate} Units/kg/hour] x [${weight.toFixed(
+    const working = `
+      The insulin rate (in Units/hour) is calculated by multiplying the weight-based rate (in Units/kg/hour) by the patient weight (provided value: <strong>${weight.toFixed(
+        1
+      )}kg</strong>).<br><br> The relevant weight-based rate is based on the patient age (provided value: ${
+      data.patientAge
+    } years):
+      <ul><li>Age <${config.insulin.ageThreshold} years = ${
+      config.insulin.rateOptions[0]
+    } Units/kg/hour</li>
+      <li>Age >=${config.insulin.ageThreshold} years = ${
+      config.insulin.rateOptions[0]
+    } Units/kg/hour</li></ul>
+      
+      [${rateUnitsPerKgPerHour} Units/kg/hour] x [${weight.toFixed(
       1
-    )}kg] = ${isCapped ? "<s>" : ""}${uncapped.toFixed(2)} Units/hour${
-      isCapped ? "</s>" : ""
-    } ${isCapped ? "(exceeds limit)" : ""}`;
+    )}kg] = <strong>${raw.toFixed(2)} Units/hour</strong><br><br>
+      
+      The rate is capped if it exceeds the limit of ${cap} Units/hour (based on ${rateUnitsPerKgPerHour} Units/kg/hour for ${
+      config.caps.weight
+    }kg patient).<br><br>
+        The calculated rate is therefore <strong>${val.toFixed(2)}mL</strong>.
+      `;
 
     return {
       val,
-      isCapped,
-      formula,
-      limit,
       working,
     };
   };
 
   /**
-   * Calculates the glucose bolus volume based on patient weight and a given mL/kg.
-   * @returns {Object} - An object containing the calculated volume, formula, limit, and working calculation.
+   * Calculates the IV insulin rate based on patient weight and age.
+   * @returns {Object} - An object containing the calculated insulin rate, formula, limit, and working calculation.
    */
-  const calculateGlucoseBolusVolume = () => {
-    const mlsPerKg = config.mlsPerKg.glucose;
-    const cap = config.caps.glucoseBolus;
+  const calculateInsulinDose = () => {
+    // Select dose based on patient age.
+    const doseUnitsPerKg =
+      data.patientAge < config.insulin.ageThreshold
+        ? config.insulin.doseOptions[0]
+        : config.insulin.doseOptions[1];
 
-    // Calculate the uncapped glucose bolus volume based on mL/kg.
-    const uncapped = weight * mlsPerKg;
+    // Select cap based on patient age.
+    const cap =
+      data.patientAge < config.insulin.ageThreshold
+        ? config.caps.insulinDose01
+        : config.caps.insulinDose02;
 
-    // Check if the uncapped glucose bolus volume exceeds the cap.
-    const isCapped = uncapped > cap;
+    // Calculate the uncapped insulin dose (in units) based on patient weight and insulin dose in units/kg.
+    const raw = doseUnitsPerKg * weight;
 
-    // Calculate the glucose bolus volume to use, selecting between capped or uncapped volumes.
-    const val = isCapped ? cap : uncapped;
+    const double = raw * 2;
 
-    // Generate string showing the formula used to calculate the glucose bolus volume.
-    const formula = `[${mlsPerKg}mL/kg] x [Patient weight (kg)]`;
+    const roundedDouble = Math.round(double);
 
-    // Generate string showing the glucose bolus volume limit.
-    const limit = `${cap}mL`;
+    const rounded = roundedDouble / 2;
 
-    // Generate string showing the working calculation for the glucose bolus volume.
-    const working = `[${mlsPerKg}mL/kg] x [${weight.toFixed(1)}kg] = ${
-      isCapped ? "<s>" : ""
-    }${uncapped.toFixed(0)}mL${isCapped ? "</s>" : ""} ${
-      isCapped ? "(exceeds limit)" : ""
-    }`;
+    // Check if the uncapped insulin dose exceeds the cap.
+    const isCapped = rounded > cap;
+
+    // Calculate the insulin dose to use, selecting between capped or uncapped doses.
+    const val = isCapped ? cap : rounded;
+
+    // Generate string showing the working calculation for the insulin dose.
+    const working = `
+      The insulin dose is calculated by multiplying the weight-based dose (in Units/kg) by the patient weight (provided value: <strong>${weight.toFixed(
+        1
+      )}kg</strong>).<br><br>
+      The relevant weight-based dose is based on the patient age (provided value: <strong>${
+        data.patientAge
+      } years</strong>):
+      <ul><li>Age <${config.insulin.ageThreshold} years = ${
+      config.insulin.doseOptions[0]
+    } Units/kg</li>
+      <li>Age >=${config.insulin.ageThreshold} years = ${
+      config.insulin.doseOptions[1]
+    } Units/kg</li></ul>
+      
+      [${doseUnitsPerKg} Units/kg] x [${weight.toFixed(
+      1
+    )}kg] = <strong>${raw.toFixed(2)} Units/hour</strong><br><br>
+      The dose is rounded to the nearest half-unit.<br><br>
+      The dose is capped if it exceeds the limit of ${cap} Units (based on ${doseUnitsPerKg} Units/kg for ${
+      config.caps.weight
+    }kg patient).<br><br>
+        The calculated dose is therefore <strong>${val.toFixed(
+          1
+        )} Units</strong>.
+      `;
 
     return {
       val,
-      mlsPerKg,
-      isCapped,
-      formula,
-      limit,
-      working,
-    };
-  };
-
-  /**
-   * Calculates the HHS bolus volume based on patient weight and a given mL/kg.
-   * @returns {Object} - An object containing the calculated volume, formula, limit, and working calculation.
-   */
-  const calculateHhsBolusVolume = () => {
-    const mlsPerKg = config.mlsPerKg.hhs;
-    const cap = config.caps.hhsBolus;
-
-    // Calculate the uncapped HHS bolus volume based on mL/kg.
-    const uncapped = weight * mlsPerKg;
-
-    // Check if the uncapped HHS bolus volume exceeds the cap.
-    const isCapped = uncapped > cap;
-
-    // Calculate the HHS bolus volume to use, selecting between capped or uncapped volumes.
-    const val = isCapped ? cap : uncapped;
-
-    // Generate string showing the formula used to calculate the HHS bolus volume.
-    const formula = `[${mlsPerKg}mL/kg] x [Patient weight (kg)]`;
-
-    // Generate string showing the HHS bolus volume limit.
-    const limit = `${cap}mL`;
-
-    // Shows the working calculation for the HHS bolus volume.
-    const working = `[${mlsPerKg}mL/kg] x [${weight.toFixed(1)}kg] = ${
-      isCapped ? "<s>" : ""
-    }${uncapped.toFixed(0)}mL${isCapped ? "</s>" : ""} ${
-      isCapped ? "(exceeds limit)" : ""
-    }`;
-
-    return {
-      val,
-      mlsPerKg,
-      isCapped,
-      formula,
-      limit,
       working,
     };
   };
 
   return {
     severity,
-    bolusVolume,
+    bolus: calculateBolus(),
     deficit,
     maintenance,
-    startingFluidRate: calculateStartingFluidRate(),
+    bagSpeeds: calculateBagSpeeds(),
     insulinRate: calculateInsulinRate(),
-    glucoseBolusVolume: calculateGlucoseBolusVolume(),
-    hhsBolusVolume: calculateHhsBolusVolume(),
+    insulinDose: calculateInsulinDose(),
     errors: errors,
   };
 };
