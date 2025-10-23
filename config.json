@@ -24,7 +24,7 @@
       "main": "https://github.com/dan-leach/msf-diabetes-api",
       "changelog": "https://github.com/dan-leach/msf-diabetes-api/wiki/Changelog"
     },
-    "url": "https://api.msf.dka-calculator.co.uk/",
+    "url": "https://dev-api.msf.dka-calculator.co.uk/",
     "timeoutDuration": 15000,
     "showConsole": true,
     "database": {
@@ -63,6 +63,16 @@
       "min": 0,
       "max": 19.01
     },
+    "dropFactor": [
+      {
+        "type": "paediatric infusion set",
+        "drops": 60
+      },
+      {
+        "type": "adult infusion set",
+        "drops": 20
+      }
+    ],
     "glucose": {
       "units": {
         "mg/dL": {
@@ -133,14 +143,28 @@
   "bolus": {
     "mlsPerKg": 10,
     "duration": {
-      "shock": 0.25,
-      "noShock": 1
+      "shock": 15,
+      "noShock": 60
     }
   },
   "insulin": {
     "ageThreshold": 2,
     "rateOptions": [0.05, 0.1],
     "doseOptions": [0.1, 0.2]
+  },
+  "decimals": {
+    "bolusVolume": 0,
+    "bolusRate": 0,
+    "weight": 1,
+    "deficitVolume": 1,
+    "deficitRate": 1,
+    "maintenanceVolume": 1,
+    "maintenanceRate": 1,
+    "bagSpeed": 0,
+    "ivInsulinRate": 2,
+    "age": 1,
+    "imInsulinDose": 1,
+    "drops": 0
   },
   "deficitReplacementDuration": 48,
   "bagSpeedGlucoseThresholds": {

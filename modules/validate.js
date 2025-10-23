@@ -86,6 +86,19 @@ const calculateRules = [
       "Syringe driver availability field must be data type [boolean]."
     ),
 
+  check("infusionPumpAvailable")
+    .isBoolean()
+    .withMessage(
+      "Infusion pump availability field must be data type [boolean]."
+    ),
+
+  check("dropFactor")
+    .if(body("infusionPumpAvailable").equals("false"))
+    .isIn(config.validation.dropFactor.map((d) => String(d.drops)))
+    .withMessage(
+      "Drop factor field must match one of the allowed drops/minute values."
+    ),
+
   //clinical details
   check("glucoseUnit")
     .isIn(config.validation.glucose.units)

@@ -17,6 +17,8 @@ const calculateVariables = (data) => {
    */
   const volumeToRate = (volume, unitTime) => volume / unitTime;
 
+  const rateToDrops = (rate, dropFactor) => (rate / 60) * dropFactor;
+
   /**
    * Determines the severity of the condition based onpH, bicarbonate, urine ketones or blood ketones.
    * @returns {string|boolean} - Severity level ("severe", "standard") or false if no valid severity is found.
@@ -151,7 +153,7 @@ const calculateVariables = (data) => {
       // Generate string showing working calculation for the bolus volume.
       let working = `
         The default bolus is ${mlsPerKg}mL/kg x weight in kilograms (provided value: <strong>${weight}kg</strong>) = ${raw.toFixed(
-        1
+        config.decimals.bolusVolume
       )}mL<br><br>
         The default bolus is overriden in the following circumstances:
         <ul><li>No bolus is given if GCS <=${
@@ -164,7 +166,9 @@ const calculateVariables = (data) => {
         <li>The bolus is capped if it exceeds the limit of ${cap}mL (based on ${mlsPerKg}mL/kg for ${
         config.caps.weight
       }kg patient)</li></ul>
-        The calculated bolus is therefore <strong>${val.toFixed(1)}mL</strong>.
+        The calculated bolus is therefore <strong>${val.toFixed(
+          config.decimals.bolusVolume
+        )}mL</strong>.
       `;
 
       return {
@@ -181,14 +185,12 @@ const calculateVariables = (data) => {
         : config.bolus.duration.noShock;
 
       const working = `Bolus duration is linked to the presence of shock:<ul><li>Shocked = ${
-        config.bolus.duration.shock * 60
+        config.bolus.duration.shock
       } minutes</li><li>Not shocked = ${
-        config.bolus.duration.noShock * 60
+        config.bolus.duration.noShock
       } minutes</li></ul>Patient is <strong>${
         data.shockPresent ? "shocked" : "not shocked"
-      }</strong>, therefore bolus duration is <strong>${
-        val * 60
-      }</strong> minutes.`;
+      }</strong>, therefore bolus duration is <strong>${val}</strong> minutes.`;
 
       return {
         val,
@@ -203,18 +205,44 @@ const calculateVariables = (data) => {
      */
     const calculateRate = () => {
       // Calculate the bolus rate in mL/hour.
-      const val = volumeToRate(volume.val, duration.val);
+      const val = volumeToRate(volume.val, duration.val / 60);
 
       // Generate string showing working calculation for the bolus rate.
       const working = `
         Bolus rate is calculated by dividing the bolus volume (calculated value: <strong>${volume.val.toFixed(
-          1
+          config.decimals.bolusVolume
         )}mL</strong>) by the bolus duration (in hours) (calculated value: <strong>${
-        duration.val
+        duration.val / 60
       }</strong> hours).<br><br>
-        [${volume.val.toFixed(1)}mL] ÷ [${
-        duration.val
-      } hours] = <strong>${val.toFixed(1)}mL/hour</strong>`;
+        [${volume.val.toFixed(config.decimals.bolusVolume)}mL] ÷ [${
+        duration.val / 60
+      } hours] = <strong>${val.toFixed(
+        config.decimals.bolusRate
+      )}mL/hour</strong>`;
+
+      return {
+        val,
+        working,
+      };
+    };
+    const rate = calculateRate();
+
+    const calculateDrops = () => {
+      // Calculate the bolus rate in mL/hour.
+      const val = rateToDrops(rate.val, data.dropFactor);
+
+      // Generate string showing working calculation for the bolus rate.
+      const working = `
+        Drop rate is calculated by dividing the rate (in mL/hour) by 60 (to give a rate in mL/minute) and then multiplying by the drop factor (provided value: ${
+          data.dropFactor
+        } drops/mL).<br><br>
+        ([${rate.val.toFixed(
+          config.decimals.bolusRate
+        )}mL/hour] ÷ [60 minutes]) x ${
+        data.dropFactor
+      }drops/mL = <strong>${val.toFixed(
+        config.decimals.drops
+      )} drops/minute</strong>`;
 
       return {
         val,
@@ -225,7 +253,8 @@ const calculateVariables = (data) => {
     return {
       volume,
       duration,
-      rate: calculateRate(),
+      rate,
+      drops: data.dropFactor ? calculateDrops() : null,
     };
   };
 
@@ -275,13 +304,13 @@ const calculateVariables = (data) => {
           config.severity.standard.deficitPercentage
         }%</strong>) by patient weight (provided value: <strong>${weight}kg</strong>) by a factor of 10.<br><br>
         [${config.severity.standard.deficitPercentage}%] x [${weight.toFixed(
-        1
-      )}kg] x 10 = ${raw.toFixed(1)}mL<br><br>
+        config.decimals.weight
+      )}kg] x 10 = ${raw.toFixed(config.decimals.deficitVolume)}mL<br><br>
         The volume is capped if it exceeds the limit of ${cap}mL (based on deficit volume for ${
         config.caps.weight
       }kg patient).<br><br>
         The calculated deficit volume is therefore <strong>${val.toFixed(
-          1
+          config.decimals.deficitVolume
         )}mL</strong>.`;
 
       return {
@@ -312,13 +341,13 @@ const calculateVariables = (data) => {
           config.severity.severe.deficitPercentage
         }%</strong>) by patient weight (provided value: <strong>${weight}kg</strong>) by a factor of 10.<br><br>
         [${config.severity.severe.deficitPercentage}%] x [${weight.toFixed(
-        1
-      )}kg] x 10 = ${raw.toFixed(1)}mL<br><br>
+        config.decimals.weight
+      )}kg] x 10 = ${raw.toFixed(config.decimals.deficitVolume)}mL<br><br>
         The volume is capped if it exceeds the limit of ${cap}mL (based on deficit volume for ${
         config.caps.weight
       }kg patient).<br><br>
         The calculated deficit volume is therefore <strong>${val.toFixed(
-          1
+          config.decimals.deficitVolume
         )}mL</strong>.`;
 
       return {
@@ -339,13 +368,11 @@ const calculateVariables = (data) => {
 
       // Generate string showing the working calculation for the fluid replacement rate.
       const working = `
-        The deficit replacement rate is calculated by dividing the deficit volume (calculated value: <strong>${vol.toFixed(
-          1
-        )}mL</strong>) by the deficit replacement duration of ${replacementDuration} hours.<br><br>
+        The deficit replacement rate is calculated by dividing the deficit volume by the deficit replacement duration of ${replacementDuration} hours.<br><br>
         [${vol.toFixed(
-          0
+          config.decimals.deficitVolume
         )}mL] ÷ [${replacementDuration} hours] = <strong>${val.toFixed(
-        1
+        config.decimals.deficitRate
       )}mL/hour</strong>`;
 
       return {
@@ -398,34 +425,38 @@ const calculateVariables = (data) => {
        */
       let working = `
         The daily maintenance volume is based on the patient weight (provided value: <strong>${weight}kg</strong>):
-        <ul><li>100mL/kg for the first 10kg,</li>
-        <li>then 50mL/kg for the second 10kg,</li>
+        <ul><li>100mL/kg for the first 10kg</li>
+        <li>then 50mL/kg for the second 10kg</li>
         <li>then 20mL/kg for the remainder</li></ul>
       `;
       if (weight > 20) {
         working += `
-          100mL/kg x 10kg = 1000.0mL<br>
-          50mL/kg x 10kg = 500.0mL<br>
+          100mL/kg x 10kg = 1000mL<br>
+          50mL/kg x 10kg = 500mL<br>
           20mL/kg x ${weight - 20}kg = ${((weight - 20) * 20).toFixed(
-          1
+          config.decimals.maintenanceVolume
         )}mL<br><br>
-        1000 + 500 + ${((weight - 20) * 20).toFixed(
-          1
-        )}kg = <strong>${val.toFixed(1)}mL</strong>
+        1000mL + 500mL + ${((weight - 20) * 20).toFixed(
+          config.decimals.maintenanceVolume
+        )}mL = <strong>${val.toFixed(
+          config.decimals.maintenanceVolume
+        )}mL</strong>
         `;
       } else if (weight > 10) {
         working += `
-          100mL/kg x 10kg = 1000.0mL<br>
+          100mL/kg x 10kg = 1000mL<br>
           50mL/kg x ${weight - 10}kg = ${((weight - 10) * 50).toFixed(
-          1
+          config.decimals.maintenanceVolume
         )}mL<br><br>
-          1000 + ${((weight - 10) * 50).toFixed(1)}kg = <strong>${val.toFixed(
-          1
+          1000mL + ${((weight - 10) * 50).toFixed(
+            config.decimals.maintenanceVolume
+          )}mL = <strong>${val.toFixed(
+          config.decimals.maintenanceVolume
         )}mL</strong>
         `;
       } else if (weight > config.validation.weight.min) {
         working += `100mL/kg x ${weight}kg = <strong>${val.toFixed(
-          1
+          config.decimals.maintenanceVolume
         )}mL</strong>`;
       } else {
         throw new Error("Unable to generate maintenance volume working.");
@@ -436,7 +467,7 @@ const calculateVariables = (data) => {
         config.caps.weight
       }kg patient).<br><br>
         The calculated daily maintenance volume is therefore <strong>${val.toFixed(
-          1
+          config.decimals.maintenanceVolume
         )}mL</strong>.`;
 
       return {
@@ -456,11 +487,11 @@ const calculateVariables = (data) => {
 
       // Generate string showing the working calculation for the daily maintenance fluid rate.
       const working = `
-        The daily maintenance rate is calculated by dividing the daily maintenance volume (calculated value: <strong>${volume.val.toFixed(
-          1
-        )}mL</strong>) by 24 hours.<br><br>
-        [${volume.val.toFixed(0)}mL] ÷ 24 hours = <strong>${val.toFixed(
-        1
+        The daily maintenance rate is calculated by dividing the daily maintenance volume by 24 hours.<br><br>
+        [${volume.val.toFixed(
+          config.decimals.maintenanceVolume
+        )}mL] ÷ 24 hours = <strong>${val.toFixed(
+        config.decimals.maintenanceRate
       )}mL/hour</strong>`;
 
       return {
@@ -482,20 +513,51 @@ const calculateVariables = (data) => {
    */
   const calculateBagSpeeds = () => {
     // Calculate the speed fluid rate by summing deficit and maintenance rates.
-    const calculateSpeed = (deficitRate, maintenanceRate) => {
+    const calculateSpeed = (
+      deficitVolume,
+      deficitRate,
+      maintenanceVolume,
+      maintenanceRate
+    ) => {
       // Calculate the speed fluid rate in mL/hour.
-      const val = deficitRate + maintenanceRate;
+      const val = deficitRate.val + maintenanceRate.val;
 
       // Generate string showing the working calculation for the fluid rate.
       const working = `
-        The bag speed is calculated by summing the relevant deficit rate (calculated value: <strong>${deficitRate.toFixed(
-          1
-        )}mL/hour</strong>) with the daily maintenance rate (calculated value: <strong>${maintenanceRate.toFixed(
-        1
-      )}mL/hour</strong>).<br><br>
-        [${deficitRate.toFixed(1)}mL/hour] + [${maintenanceRate.toFixed(
-        1
-      )}mL/hour] = <strong>${val.toFixed(1)}mL/hour</strong>`;
+        <div class="card mb-2">
+          <div class="card-header">
+            1. Calculate deficit replacement rate
+          </div>
+          <div class="card-body">
+            ${deficitVolume.working}<br><br>
+            ${deficitRate.working}
+          </div>
+        </div>
+        <div class="card mb-2">
+          <div class="card-header">
+            2. Calculate maintenance rate
+          </div>
+          <div class="card-body">
+            ${maintenanceVolume.working}<br><br>
+            ${maintenanceRate.working}
+          </div>
+        </div>
+        <div class="card mb-2">
+          <div class="card-header">
+            3. Calculate bag speed
+          </div>
+          <div class="card-body">
+            The bag speed is calculated by summing the deficit rate with the daily maintenance rate.<br><br>
+            [${deficitRate.val.toFixed(
+              config.decimals.deficitRate
+            )}mL/hour] + [${maintenanceRate.val.toFixed(
+        config.decimals.maintenanceRate
+      )}mL/hour] = <strong>${val.toFixed(
+        config.decimals.bagSpeed
+      )}mL/hour</strong>
+          </div>
+        </div>
+      `;
 
       return {
         val,
@@ -511,10 +573,12 @@ const calculateVariables = (data) => {
       // Generate string showing the working calculation for the halffluid rate.
       const working = `
         The half bag speed is calculated by dividing the relevant rate (calculated value: <strong>${rate.toFixed(
-          1
+          config.decimals.bagSpeed
         )}mL/hour</strong>) by 2.<br><br>
-        [${rate.toFixed(1)}mL/hour] ÷ 2 = <strong>${val.toFixed(
-        1
+        [${rate.toFixed(
+          config.decimals.bagSpeed
+        )}mL/hour] ÷ 2 = <strong>${val.toFixed(
+        config.decimals.bagSpeed
       )}mL/hour</strong>`;
 
       return {
@@ -523,34 +587,90 @@ const calculateVariables = (data) => {
       };
     };
 
+    const calculateDrops = (rate) => {
+      // Calculate the drop rate in drops/minute.
+      const val = rateToDrops(rate.val, data.dropFactor);
+
+      // Generate string showing working calculation for the bolus rate.
+      const working = `
+        Drop rate is calculated by dividing the rate (in mL/hour) by 60 (to give a rate in mL/minute) and then multiplying by the drop factor (provided value: ${
+          data.dropFactor
+        } drops/mL).<br><br>
+        ([${rate.val.toFixed(
+          config.decimals.bagSpeed
+        )}mL/hour] ÷ [60 minutes]) x ${
+        data.dropFactor
+      }drops/mL = <strong>${val.toFixed(
+        config.decimals.drops
+      )} drops/minute</strong>`;
+
+      return {
+        val,
+        working,
+      };
+    };
+
     const standardSpeed = calculateSpeed(
-      deficit.standardSpeedRate.val,
-      maintenance.rate.val,
+      deficit.standardSpeedVolume,
+      deficit.standardSpeedRate,
+      maintenance.volume,
+      maintenance.rate,
       config.severity.standard.deficitPercentage
     );
 
+    const halfStandardSpeed =
+      severity.val === "standard"
+        ? calculateHalfSpeed(standardSpeed.val)
+        : null;
+
     const highSpeed = calculateSpeed(
-      deficit.highSpeedRate.val,
-      maintenance.rate.val,
+      deficit.highSpeedVolume,
+      deficit.highSpeedRate,
+      maintenance.volume,
+      maintenance.rate,
       config.severity.severe.deficitPercentage
     );
+
+    const halfHighSpeed =
+      severity.val === "severe" ? calculateHalfSpeed(highSpeed.val) : null;
 
     const hypoSpeed = highSpeed;
     hypoSpeed.working =
       `For managing hypoglycaemia the relevant deficit rate is as for severe DKA (i.e. using a deficit percentage of ${config.severity.severe.deficitPercentage}%). Therefore, if the actual DKA severity is standard the hypoglycaemia high-speed bag rate is faster than the standard-speed bag rate.<br><br>` +
       hypoSpeed.working;
 
-    return {
-      standardSpeed: severity.val === "severe" ? null : standardSpeed,
-      halfStandardSpeed:
-        severity.val === "severe"
-          ? null
-          : calculateHalfSpeed(standardSpeed.val),
-      highSpeed: severity.val === "severe" ? highSpeed : null,
-      halfHighSpeed:
-        severity.val === "severe" ? calculateHalfSpeed(highSpeed.val) : null,
-      hypoSpeed,
-    };
+    if (severity.val === "standard") {
+      const standardSpeedDrops = data.dropFactor
+        ? calculateDrops(standardSpeed)
+        : null;
+      const halfStandardSpeedDrops = data.dropFactor
+        ? calculateDrops(halfStandardSpeed)
+        : null;
+      const hypoSpeedDrops = data.dropFactor ? calculateDrops(hypoSpeed) : null;
+      return {
+        standardSpeed,
+        standardSpeedDrops,
+        halfStandardSpeed,
+        halfStandardSpeedDrops,
+        hypoSpeed,
+        hypoSpeedDrops,
+      };
+    } else if (severity.val === "severe") {
+      const highSpeedDrops = data.dropFactor
+        ? calculateDrops(standardSpeed)
+        : null;
+      const halfHighSpeedDrops = data.dropFactor
+        ? calculateDrops(halfStandardSpeed)
+        : null;
+      return {
+        highSpeed,
+        highSpeedDrops,
+        halfHighSpeed,
+        halfHighSpeedDrops,
+      };
+    } else {
+      throw new Error("Unable to select bag speed options as severity");
+    }
   };
 
   /**
@@ -582,7 +702,7 @@ const calculateVariables = (data) => {
     // Generate string showing the working calculation for the insulin rate.
     const working = `
       The insulin rate (in Units/hour) is calculated by multiplying the weight-based rate (in Units/kg/hour) by the patient weight (provided value: <strong>${weight.toFixed(
-        1
+        config.decimals.weight
       )}kg</strong>).<br><br> The relevant weight-based rate is based on the patient age (provided value: ${
       data.patientAge
     } years):
@@ -594,13 +714,17 @@ const calculateVariables = (data) => {
     } Units/kg/hour</li></ul>
       
       [${rateUnitsPerKgPerHour} Units/kg/hour] x [${weight.toFixed(
-      1
-    )}kg] = <strong>${raw.toFixed(2)} Units/hour</strong><br><br>
+      config.decimals.weight
+    )}kg] = <strong>${raw.toFixed(
+      config.decimals.ivInsulinRate
+    )} Units/hour</strong><br><br>
       
       The rate is capped if it exceeds the limit of ${cap} Units/hour (based on ${rateUnitsPerKgPerHour} Units/kg/hour for ${
       config.caps.weight
     }kg patient).<br><br>
-        The calculated rate is therefore <strong>${val.toFixed(2)}mL</strong>.
+        The calculated rate is therefore <strong>${val.toFixed(
+          config.decimals.ivInsulinRate
+        )}mL</strong>.
       `;
 
     return {
@@ -644,11 +768,11 @@ const calculateVariables = (data) => {
     // Generate string showing the working calculation for the insulin dose.
     const working = `
       The insulin dose is calculated by multiplying the weight-based dose (in Units/kg) by the patient weight (provided value: <strong>${weight.toFixed(
-        1
+        config.decimals.weight
       )}kg</strong>).<br><br>
-      The relevant weight-based dose is based on the patient age (provided value: <strong>${
+      The relevant weight-based dose is based on the patient age (provided value: <strong>${parseFloat(
         data.patientAge
-      } years</strong>):
+      ).toFixed(config.decimals.age)} years</strong>):
       <ul><li>Age <${config.insulin.ageThreshold} years = ${
       config.insulin.doseOptions[0]
     } Units/kg</li>
@@ -657,14 +781,16 @@ const calculateVariables = (data) => {
     } Units/kg</li></ul>
       
       [${doseUnitsPerKg} Units/kg] x [${weight.toFixed(
-      1
-    )}kg] = <strong>${raw.toFixed(2)} Units/hour</strong><br><br>
+      config.decimals.weight
+    )}kg] = <strong>${raw.toFixed(
+      config.decimals.imInsulinDose
+    )} Units</strong><br><br>
       The dose is rounded to the nearest half-unit.<br><br>
       The dose is capped if it exceeds the limit of ${cap} Units (based on ${doseUnitsPerKg} Units/kg for ${
       config.caps.weight
     }kg patient).<br><br>
         The calculated dose is therefore <strong>${val.toFixed(
-          1
+          config.decimals.imInsulinDose
         )} Units</strong>.
       `;
 
