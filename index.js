@@ -18,11 +18,7 @@ const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const { matchedData } = require("express-validator");
 const config = require("./config.json");
-const {
-  validateRequest,
-  calculateRules,
-  sodiumOsmoRules,
-} = require("./modules/validate");
+const { validateRequest, calculateRules } = require("./modules/validate");
 const { handleError } = require("./modules/handleError");
 const app = express();
 app.use(cors());
@@ -59,9 +55,10 @@ app.get("/", (req, res) => {
  */
 app.get("/config", (req, res) => {
   try {
-    config.client.version = process.env.clientVersion;
-    config.api.version = process.env.apiVersion;
-    config.lastUpdated = process.env.lastUpdated;
+    config.api.version = process.env.version;
+    config.api.lastUpdated = process.env.lastUpdated;
+    config.api.underDevelopment =
+      process.env.NODE_ENV === "development" ? true : false;
     res.json(config);
   } catch (error) {
     handleError(
@@ -164,7 +161,8 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
     //get the IP address of the client request
     const clientIP = req.ip;
 
-    data.appVersion.api = process.env.apiVersion;
+    data.appVersion.api = process.env.version;
+    data.appVersion.apiMode = process.env.NODE_ENV;
 
     data.serverCalculations = true;
 

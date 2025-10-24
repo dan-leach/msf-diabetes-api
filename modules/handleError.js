@@ -64,7 +64,7 @@ function handleError(
       html
     );
   }
-  
+
   console.error(" ");
 }
 
@@ -81,8 +81,8 @@ function handleError(
  */
 const sendMail = async (email, subject, html) => {
   const config = require("../config.json");
-  if (config.underDevelopment) {
-    console.error("Dev mode active: error email notifications disabled");
+  if (process.env.NODE_ENV === "development") {
+    console.error("Api dev mode active: error email notifications disabled");
     return false;
   }
 
