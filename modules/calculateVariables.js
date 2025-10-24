@@ -233,14 +233,14 @@ const calculateVariables = (data) => {
 
       // Generate string showing working calculation for the bolus rate.
       const working = `
-        Drop rate is calculated by dividing the rate (in mL/hour) by 60 (to give a rate in mL/minute) and then multiplying by the drop factor (provided value: ${
+        Drop rate is calculated by dividing the rate (in mL/hour) by 60 (to give a rate in mL/minute) and then multiplying by the drop factor (provided value: <strong>${
           data.dropFactor
-        } drops/mL).<br><br>
+        }</strong> drops/mL).<br><br>
         ([${rate.val.toFixed(
           config.decimals.bolusRate
         )}mL/hour] ÷ [60 minutes]) x ${
         data.dropFactor
-      }drops/mL = <strong>${val.toFixed(
+      } drops/mL = <strong>${val.toFixed(
         config.decimals.drops
       )} drops/minute</strong>`;
 
@@ -593,14 +593,14 @@ const calculateVariables = (data) => {
 
       // Generate string showing working calculation for the bolus rate.
       const working = `
-        Drop rate is calculated by dividing the rate (in mL/hour) by 60 (to give a rate in mL/minute) and then multiplying by the drop factor (provided value: ${
+        Drop rate is calculated by dividing the rate (in mL/hour) by 60 (to give a rate in mL/minute) and then multiplying by the drop factor (provided value: <strong>${
           data.dropFactor
-        } drops/mL).<br><br>
+        }</strong> drops/mL).<br><br>
         ([${rate.val.toFixed(
           config.decimals.bagSpeed
         )}mL/hour] ÷ [60 minutes]) x ${
         data.dropFactor
-      }drops/mL = <strong>${val.toFixed(
+      } drops/mL = <strong>${val.toFixed(
         config.decimals.drops
       )} drops/minute</strong>`;
 
@@ -656,11 +656,9 @@ const calculateVariables = (data) => {
         hypoSpeedDrops,
       };
     } else if (severity.val === "severe") {
-      const highSpeedDrops = data.dropFactor
-        ? calculateDrops(standardSpeed)
-        : null;
+      const highSpeedDrops = data.dropFactor ? calculateDrops(highSpeed) : null;
       const halfHighSpeedDrops = data.dropFactor
-        ? calculateDrops(halfStandardSpeed)
+        ? calculateDrops(halfHighSpeed)
         : null;
       return {
         highSpeed,
