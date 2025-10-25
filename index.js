@@ -59,6 +59,7 @@ app.get("/config", (req, res) => {
     config.api.lastUpdated = process.env.lastUpdated;
     config.api.underDevelopment =
       process.env.NODE_ENV === "development" ? true : false;
+    config.fetchDatetime = new Date().toISOString();
     res.json(config);
   } catch (error) {
     handleError(
