@@ -1,5 +1,5 @@
 /**
- * @module DKA_Calculator_API The DKA Calculator API application setup and routing.
+ * @module MSF_Diabetes_Calculator_API The MSF Diabetes Calculator API application setup and routing.
  *
  * @description This Express server provides various API endpoints including the main calculate route, and the secondary update and sodium-osmo routes.
  *
@@ -23,6 +23,8 @@ const { handleError } = require("./modules/handleError");
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+const path = require("path");
 
 //required to get the client IP address as server behind proxy
 app.set("trust proxy", 3);
@@ -67,6 +69,81 @@ app.get("/config", (req, res) => {
       500,
       "/config",
       "Failed to load configuration file",
+      res
+    );
+  }
+});
+
+/**
+ * @route GET /cache/calculateVariables.js
+ * @summary Provides the calculateVariables module to the client for caching.
+ *
+ * @returns {Object} 200 - js file containing the calculateVariables module.
+ */
+app.get("/cache/calculateVariables.js", (req, res) => {
+  try {
+    res.sendFile(path.join(__dirname, "modules/calculateVariables.js"), {
+      headers: {
+        "Content-Type": "application/javascript",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  } catch (error) {
+    handleError(
+      error,
+      500,
+      "/cache/calculateVariables.js",
+      "Failed to load calculateVariables module for caching",
+      res
+    );
+  }
+});
+
+/**
+ * @route GET /cache/validate.js
+ * @summary Provides the validate module to the client for caching.
+ *
+ * @returns {Object} 200 - js file containing the validate module.
+ */
+app.get("/cache/validate.js", (req, res) => {
+  try {
+    res.sendFile(path.join(__dirname, "modules/validate.js"), {
+      headers: {
+        "Content-Type": "application/javascript",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  } catch (error) {
+    handleError(
+      error,
+      500,
+      "/cache/validate.js",
+      "Failed to load validate module for caching",
+      res
+    );
+  }
+});
+
+/**
+ * @route GET /cache/checkWeightWithinLimit.js
+ * @summary Provides the checkWeightWithinLimit module to the client for caching.
+ *
+ * @returns {Object} 200 - js file containing the checkWeightWithinLimit module.
+ */
+app.get("/cache/checkWeightWithinLimit.js", (req, res) => {
+  try {
+    res.sendFile(path.join(__dirname, "modules/checkWeightWithinLimit.js"), {
+      headers: {
+        "Content-Type": "application/javascript",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  } catch (error) {
+    handleError(
+      error,
+      500,
+      "/cache/checkWeightWithinLimit.js",
+      "Failed to load checkWeightWithinLimit module for caching",
       res
     );
   }
