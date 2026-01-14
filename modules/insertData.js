@@ -40,7 +40,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
       data.use2SD,
       data.bloodGasAvailable,
       data.bloodKetonesAvailable,
-      data.syringeDriverAvailable,
+      data.syringePumpAvailable,
     ]);
 
     if (result.affectedRows === 0) {

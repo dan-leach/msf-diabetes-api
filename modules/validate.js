@@ -80,10 +80,10 @@ const calculateRules = [
       "Blood ketones availability field must be data type [boolean]."
     ),
 
-  check("syringeDriverAvailable")
+  check("syringePumpAvailable")
     .isBoolean()
     .withMessage(
-      "Syringe driver availability field must be data type [boolean]."
+      "Syringe pump availability field must be data type [boolean]."
     ),
 
   check("infusionPumpAvailable")
