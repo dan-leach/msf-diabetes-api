@@ -337,7 +337,7 @@ const calculateVariables = (data) => {
       const val = isCapped ? cap : raw;
 
       const working = `
-        The deficit volume is volume is calculated by multiplying the deficit percentage (calculated value: <strong>${
+        The deficit volume is calculated by multiplying the deficit percentage (calculated value: <strong>${
           config.severity.severe.deficitPercentage
         }%</strong>) by patient weight (provided value: <strong>${weight}kg</strong>) by a factor of 10.<br><br>
         [${config.severity.severe.deficitPercentage}%] x [${weight.toFixed(
