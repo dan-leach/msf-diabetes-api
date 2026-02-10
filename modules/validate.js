@@ -18,7 +18,7 @@ const calculateRules = [
   check("episodeType")
     .isAlpha()
     .withMessage(
-      "Episode type field must be data type [string], containing only alphabetical characters."
+      "Episode type field must be data type [string], containing only alphabetical characters.",
     )
     .bail()
     .custom((value) => config.validation.episodeType.options.includes(value))
@@ -27,7 +27,7 @@ const calculateRules = [
   check("patientSex")
     .isAlpha()
     .withMessage(
-      "Patient sex field must be data type [string], containing only alphabetical characters."
+      "Patient sex field must be data type [string], containing only alphabetical characters.",
     )
     .bail()
     .custom((value) => config.validation.patientSex.options.includes(value))
@@ -39,7 +39,7 @@ const calculateRules = [
       max: config.validation.weight.max,
     })
     .withMessage(
-      `Weight must be a valid number between ${config.validation.weight.min} and ${config.validation.weight.max}.`
+      `Weight must be a valid number between ${config.validation.weight.min} and ${config.validation.weight.max}.`,
     ),
 
   check("operationalCentre")
@@ -58,7 +58,7 @@ const calculateRules = [
       max: config.validation.patientAge.max,
     })
     .withMessage(
-      `Patient age must be an decimal in the range ${config.validation.patientAge.min} to ${config.validation.patientAge.max}.`
+      `Patient age must be an decimal in the range ${config.validation.patientAge.min} to ${config.validation.patientAge.max}.`,
     ),
 
   check("weightLimitOverride")
@@ -77,26 +77,26 @@ const calculateRules = [
   check("bloodKetonesAvailable")
     .isBoolean()
     .withMessage(
-      "Blood ketones availability field must be data type [boolean]."
+      "Blood ketones availability field must be data type [boolean].",
     ),
 
   check("syringePumpAvailable")
     .isBoolean()
     .withMessage(
-      "Syringe pump availability field must be data type [boolean]."
+      "Syringe pump availability field must be data type [boolean].",
     ),
 
   check("infusionPumpAvailable")
     .isBoolean()
     .withMessage(
-      "Infusion pump availability field must be data type [boolean]."
+      "Infusion pump availability field must be data type [boolean].",
     ),
 
   check("dropFactor")
     .if(body("infusionPumpAvailable").equals("false"))
     .isIn(config.validation.dropFactor.map((d) => String(d.drops)))
     .withMessage(
-      "Drop factor field must match one of the allowed drops/minute values."
+      "Drop factor field must match one of the allowed drops/minute values.",
     ),
 
   //clinical details
@@ -118,7 +118,7 @@ const calculateRules = [
         value > config.validation.glucose.units[unit].max
       ) {
         throw new Error(
-          `Glucose must be in range ${config.validation.glucose.units[unit].min} to ${config.validation.glucose.units[unit].max} ${unit}.`
+          `Glucose must be in range ${config.validation.glucose.units[unit].min} to ${config.validation.glucose.units[unit].max} ${unit}.`,
         );
       }
 
@@ -131,7 +131,7 @@ const calculateRules = [
       min: config.validation.bloodKetones.min,
     })
     .withMessage(
-      `If provided, blood ketones must be a decimal at least ${config.validation.bloodKetones.min}mmol/L (the diagnostic threshold for DKA).`
+      `If provided, blood ketones must be a decimal at least ${config.validation.bloodKetones.min}mmol/L (the diagnostic threshold for DKA).`,
     ),
 
   check("urineKetones")
@@ -140,7 +140,7 @@ const calculateRules = [
       min: config.validation.urineKetones.min,
     })
     .withMessage(
-      `If provided, urine ketones must be an integer at least ${config.validation.urineKetones.min}+ (the diagnostic threshold for DKA).`
+      `If provided, urine ketones must be an integer at least ${config.validation.urineKetones.min}+ (the diagnostic threshold for DKA).`,
     ),
 
   check("diagnosticFeatures")
@@ -157,7 +157,7 @@ const calculateRules = [
       max: config.validation.pH.max,
     })
     .withMessage(
-      `pH must be a decimal in the range ${config.validation.pH.min} to ${config.validation.pH.max}.`
+      `pH must be a decimal in the range ${config.validation.pH.min} to ${config.validation.pH.max}.`,
     ),
 
   check("bicarbonate")
@@ -167,7 +167,7 @@ const calculateRules = [
       max: config.validation.bicarbonate.max,
     })
     .withMessage(
-      `Bicarbonate must be a decimal in the range ${config.validation.bicarbonate.min} to ${config.validation.bicarbonate.max}.`
+      `Bicarbonate must be a decimal in the range ${config.validation.bicarbonate.min} to ${config.validation.bicarbonate.max}.`,
     ),
 
   check("shockPresent")
@@ -181,7 +181,7 @@ const calculateRules = [
       max: config.validation.gcs.max,
     })
     .withMessage(
-      `GCS must be an integer in the range ${config.validation.gcs.min} to ${config.validation.gcs.max}.`
+      `GCS must be an integer in the range ${config.validation.gcs.min} to ${config.validation.gcs.max}.`,
     ),
 
   check("respiratorySupport")
@@ -190,7 +190,7 @@ const calculateRules = [
     .if(body("gcs").isFloat({ min: config.validation.gcs.severeThreshold }))
     .isBoolean()
     .withMessage(
-      "Respiratory support status field must be data type [boolean]."
+      "Respiratory support status field must be data type [boolean].",
     ),
 
   check("appVersion")
@@ -199,17 +199,56 @@ const calculateRules = [
     .bail()
     .custom((obj) =>
       Object.values(obj).every(
-        (value) => typeof value === "string" && /^[a-zA-Z0-9 .]+$/.test(value)
-      )
+        (value) => typeof value === "string" && /^[a-zA-Z0-9 .]+$/.test(value),
+      ),
     )
     .withMessage(
-      "Each app version property value must be data type [string], containing stop and alphanumeric characters only."
+      "Each app version property value must be data type [string], containing stop and alphanumeric characters only.",
     ),
 
   check("clientUseragent")
     .isString()
     .withMessage("Client useragent field must be data type [string].")
     .escape(),
+];
+
+/**
+ * Validation rules for the sync-offline-data route.
+ * @type {Array}
+ */
+const syncOfflineDataRules = [
+  check("auditID")
+    .isString()
+    .withMessage("Audit ID field must be data type [string].")
+    .escape(),
+
+  check("payload")
+    .isObject()
+    .withMessage("Payload field must be data type [object].")
+    .bail()
+    .custom((obj) => {
+      if (Object.keys(obj).length === 0) {
+        throw new Error("Payload field must not be an empty object.");
+      }
+      return true;
+    }),
+
+  check("calculations")
+    .isObject()
+    .withMessage("Calculations field must be data type [object].")
+    .bail()
+    .custom((obj) => {
+      if (Object.keys(obj).length === 0) {
+        throw new Error("Calculations field must not be an empty object.");
+      }
+      return true;
+    }),
+
+  check("calculationsTimestamp")
+    .isISO8601()
+    .withMessage(
+      "Calculations timestamp field must be data type [ISO8601 datetime].",
+    ),
 ];
 
 // Middleware function to validate the request
@@ -223,5 +262,6 @@ const validateRequest = (req, res, next) => {
 
 module.exports = {
   calculateRules,
+  syncOfflineDataRules,
   validateRequest,
 };

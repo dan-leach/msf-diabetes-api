@@ -18,7 +18,11 @@ const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const { matchedData } = require("express-validator");
 const config = require("./config.json");
-const { validateRequest, calculateRules } = require("./modules/validate");
+const {
+  validateRequest,
+  calculateRules,
+  syncOfflineDataRules,
+} = require("./modules/validate");
 const { handleError } = require("./modules/handleError");
 const app = express();
 app.use(cors());
@@ -41,7 +45,7 @@ app.set("trust proxy", 3);
  */
 app.get("/", (req, res) => {
   res.send(
-    `Please go to <a href='${config.client.url}'>${config.client.url}</a> instead.`
+    `Please go to <a href='${config.client.url}'>${config.client.url}</a> instead.`,
   );
 });
 
@@ -69,7 +73,7 @@ app.get("/config", (req, res) => {
       500,
       "/config",
       "Failed to load configuration file",
-      res
+      res,
     );
   }
 });
@@ -127,7 +131,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
         400,
         "/calculate",
         "Check weight within limit failed",
-        res
+        res,
       );
     }
 
@@ -146,7 +150,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
         400,
         "/calculate",
         "Failed to perform calculations",
-        res
+        res,
       );
     }
 
@@ -184,6 +188,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
       shockPresent: data.shockPresent,
       gcs: data.gcs,
       respiratorySupport: data.respiratorySupport,
+      calculations: calculations,
     });
 
     //insert the data into the database
@@ -206,10 +211,91 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
         req.body.centre + " (" + req.body.region + ")",
         "clientDatetime: " + req.body.clientDatetime,
         req.ip,
-      ]
+      ],
     );
   }
 });
+
+/**
+ * Route for adding offline calculation episodes to the database once client back online.
+ *
+ * @route POST /sync-offline-data
+ * @summary
+ *
+ * @description
+ *
+ * @requires ./modules/insertData - Module for database insertion of calculation data.
+ * @requires ./modules/encrypt - Module for encrypting calculated data before storage.
+ *
+ * @param {object} req - The request object, with validated data and IP address.
+ * @param {object} req.body - Contains patient data fields.
+ * @param {object} res - The response object to send confirmation or errors.
+ *
+ * @returns {object} 200 - JSON object with confirmation.
+ * @returns {object} 400 - JSON object with errors if sync fails.
+ * @returns {object} 500 - JSON object with error message if a server error occurs.
+ */
+app.post(
+  "/sync-offline-data",
+  syncOfflineDataRules,
+  validateRequest,
+  async (req, res) => {
+    try {
+      const { insertCalculateData } = require("./modules/insertData");
+      const { encrypt } = require("./modules/encrypt");
+
+      //get the validated data
+      const data = matchedData(req);
+
+      //get the IP address of the client request
+      const clientIP = req.ip;
+
+      data.payload.appVersion.api = process.env.version;
+      data.payload.appVersion.apiMode = process.env.NODE_ENV;
+
+      data.payload.serverCalculations = false;
+
+      //encrypt the data
+      const encryptedData = encrypt({
+        patientSex: data.payload.patientSex,
+        weight: data.payload.weight,
+        patientAge: data.payload.patientAge,
+        glucose: data.payload.glucose,
+        glucoseUnit: data.payload.glucoseUnit,
+        bloodKetones: data.payload.bloodKetones,
+        urineKetones: data.payload.urineKetones,
+        diagnosticFeatures: data.payload.diagnosticFeatures,
+        pH: data.payload.pH,
+        bicarbonate: data.payload.bicarbonate,
+        shockPresent: data.payload.shockPresent,
+        gcs: data.payload.gcs,
+        respiratorySupport: data.payload.respiratorySupport,
+        calculations: data.calculations,
+      });
+
+      //insert the data into the database
+      await insertCalculateData(
+        data.payload,
+        encryptedData,
+        data.auditID,
+        clientIP,
+      );
+
+      //respond to the client with success message
+      res.json({
+        message: "Offline data synced successfully",
+      });
+    } catch (error) {
+      handleError(
+        error,
+        500,
+        "/sync-offline-data",
+        "Failed to sync offline data",
+        res,
+      );
+    }
+  },
+);
 
 /**
  * Route for decrypting previously stored data.
