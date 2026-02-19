@@ -160,7 +160,8 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
     data.bloodKetones = data.bloodKetones || null;
     data.urineKetones = data.urineKetones || null;
     data.gcs = data.gcs || null;
-    data.respiratorySupport || null;
+    data.respiratorySupport = data.respiratorySupport || null;
+    data.dropFactor = data.dropFactor || null;
 
     //generate a new unique auditID
     const auditID = await generateAuditID();
