@@ -80,8 +80,8 @@ async function decryptTable(decryptID) {
 
   // Fetch encrypted rows
   const query = decryptID
-    ? `SELECT id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor FROM ${config.api.database.tables.calculate} WHERE auditID = ?`
-    : `SELECT id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor FROM ${config.api.database.tables.calculate}`;
+    ? `SELECT id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor FROM ${config.api.database.tables.calculate} WHERE auditID = ?`
+    : `SELECT id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor FROM ${config.api.database.tables.calculate}`;
 
   const [rows] = await connection.execute(query, decryptID ? [decryptID] : []);
 
@@ -102,6 +102,7 @@ async function decryptTable(decryptID) {
       encryptedData,
       weightLimitOverride,
       use2SD,
+      useYearsMonths,
       bloodGasAvailable,
       bloodKetonesAvailable,
       syringePumpAvailable,
@@ -138,7 +139,7 @@ async function decryptTable(decryptID) {
     console.error("auditID", auditID);
     // Insert decrypted data into tbl_decrypt
     await connection.execute(
-      `INSERT INTO ${config.api.database.tables.decrypt} (id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, decryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO ${config.api.database.tables.decrypt} (id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, decryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         auditID,
@@ -155,6 +156,7 @@ async function decryptTable(decryptID) {
         decryptedData,
         weightLimitOverride,
         use2SD,
+        useYearsMonths,
         bloodGasAvailable,
         bloodKetonesAvailable,
         syringePumpAvailable,

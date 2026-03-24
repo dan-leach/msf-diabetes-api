@@ -160,6 +160,9 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
 
     //set undefined optional values to null
     data.pH = data.pH || null;
+    data.glucoseUnit = data.glucoseUnit || null;
+    data.glucose = data.glucose || null;
+    data.glucoseHigh = data.glucoseHigh || false;
     data.bicarbonate = data.bicarbonate || null;
     data.bloodKetones = data.bloodKetones || null;
     data.urineKetones = data.urineKetones || null;
@@ -185,6 +188,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
       patientAge: data.patientAge,
       glucose: data.glucose,
       glucoseUnit: data.glucoseUnit,
+      glucoseHigh: data.glucoseHigh,
       bloodKetones: data.bloodKetones,
       urineKetones: data.urineKetones,
       diagnosticFeatures: data.diagnosticFeatures,

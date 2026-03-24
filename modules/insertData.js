@@ -21,7 +21,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
     // Prepare SQL statement
     const sql = `
       INSERT INTO ${config.api.database.tables.calculate} (
-        auditID, episodeType, appVersion, serverCalculations, legalAgreement, operationalCentre, project, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor, offlineTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        auditID, episodeType, appVersion, serverCalculations, legalAgreement, operationalCentre, project, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor, offlineTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     data.offlineTimestamp = data.offlineTimestamp
@@ -41,6 +41,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
       "encryptedData",
       "weightLimitOverride",
       "use2SD",
+      "useYearsMonths",
       "bloodGasAvailable",
       "bloodKetonesAvailable",
       "syringePumpAvailable",
@@ -62,6 +63,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
       encryptedData,
       data.weightLimitOverride,
       data.use2SD,
+      data.useYearsMonths,
       data.bloodGasAvailable,
       data.bloodKetonesAvailable,
       data.syringePumpAvailable,
@@ -94,6 +96,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
       encryptedData,
       data.weightLimitOverride,
       data.use2SD,
+      data.useYearsMonths,
       data.bloodGasAvailable,
       data.bloodKetonesAvailable,
       data.syringePumpAvailable,

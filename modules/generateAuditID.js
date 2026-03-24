@@ -13,7 +13,7 @@ async function generateAuditID() {
   try {
     const connection = await mysql.createConnection({
       host: "localhost",
-      user: config.api.database.users.select,
+      user: process.env.app_select_user,
       password: process.env.app_select_key,
       database: config.api.database.name,
     });
@@ -21,7 +21,7 @@ async function generateAuditID() {
       auditID = generateRandomID(6, permittedChars);
       const [rows] = await connection.execute(
         `SELECT * FROM ${config.api.database.tables.calculate} WHERE auditID = ?`,
-        [auditID]
+        [auditID],
       );
 
       if (rows.length === 0) {
@@ -30,7 +30,7 @@ async function generateAuditID() {
     }
   } catch (error) {
     throw new Error(
-      `Unable to generate audit ID: ${error.message}${error.code}`
+      `Unable to generate audit ID: ${error.message}${error.code}`,
     );
   } finally {
     try {

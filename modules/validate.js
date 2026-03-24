@@ -61,6 +61,10 @@ const calculateRules = [
       `Patient age must be an decimal in the range ${config.validation.patientAge.min} to ${config.validation.patientAge.max}.`,
     ),
 
+  check("useYearsMonths")
+    .isBoolean()
+    .withMessage("Used years/months field must be data type [boolean]."),
+
   check("weightLimitOverride")
     .isBoolean()
     .withMessage("Weight limit override field must be data type [boolean]."),
@@ -101,10 +105,26 @@ const calculateRules = [
 
   //clinical details
   check("glucoseUnit")
+    .if((value, { req }) => {
+      const glucoseHigh = req.body.glucoseHigh;
+      return (
+        glucoseHigh === "false" ||
+        glucoseHigh === undefined ||
+        glucoseHigh === null
+      );
+    })
     .isIn(config.validation.glucose.units)
     .withMessage("Invalid glucose unit option provided."),
 
   check("glucose")
+    .if((value, { req }) => {
+      const glucoseHigh = req.body.glucoseHigh;
+      return (
+        glucoseHigh === "false" ||
+        glucoseHigh === undefined ||
+        glucoseHigh === null
+      );
+    })
     .isFloat()
     .withMessage("Glucose field must be data type [float].")
     .bail()
@@ -124,6 +144,14 @@ const calculateRules = [
 
       return true;
     }),
+
+  check("glucoseHigh")
+    .if((value, { req }) => {
+      const glucose = req.body.glucose;
+      return glucoseHigh === undefined || glucoseHigh === null;
+    })
+    .isBoolean()
+    .withMessage("Glucose high field must be data type [boolean]."),
 
   check("bloodKetones")
     .if(body("urineKetones").equals(""))
