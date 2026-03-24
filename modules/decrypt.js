@@ -40,14 +40,14 @@ function decryptData(encryptedAESKey, encryptedData, iv, authTag) {
         padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
         oaepHash: "sha256",
       },
-      Buffer.from(encryptedAESKey, "base64")
+      Buffer.from(encryptedAESKey, "base64"),
     );
 
     // Step 2: Decrypt the data using AES-256-GCM
     const decipher = crypto.createDecipheriv(
       "aes-256-gcm",
       decryptedAESKey,
-      Buffer.from(iv, "hex")
+      Buffer.from(iv, "hex"),
     );
 
     // Step 3: Set the authentication tag
@@ -73,37 +73,40 @@ function decryptData(encryptedAESKey, encryptedData, iv, authTag) {
 async function decryptTable(decryptID) {
   const connection = await mysql.createConnection({
     host: "localhost",
-    user: process.env.selectUser,
-    password: process.env.selectKey,
-    database: "dkacalcu_dka_database",
+    user: process.env.app_insert_user,
+    password: process.env.app_insert_key,
+    database: config.api.database.name,
   });
 
   // Fetch encrypted rows
-  const query =
-    decryptID === "all"
-      ? `SELECT id, episodeType, auditID, appVersion, patientHash, legalAgreement, region, centre, clientDatetime, serverDatetime, clientUseragent, clientIP, encryptedData FROM ${config.api.tables.calculate}`
-      : `SELECT id, episodeType, auditID, appVersion, patientHash, legalAgreement, region, centre, clientDatetime, serverDatetime, clientUseragent, clientIP, encryptedData FROM ${config.api.tables.calculate} WHERE auditID = ?`;
+  const query = decryptID
+    ? `SELECT id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor FROM ${config.api.database.tables.calculate} WHERE auditID = ?`
+    : `SELECT id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor FROM ${config.api.database.tables.calculate}`;
 
-  const [rows] = await connection.execute(
-    query,
-    decryptID === "all" ? [] : [decryptID]
-  );
+  const [rows] = await connection.execute(query, decryptID ? [decryptID] : []);
 
   for (const row of rows) {
     const {
       id,
-      episodeType,
       auditID,
+      episodeType,
+      serverCalculations,
+      offlineTimestamp,
       appVersion,
-      patientHash,
       legalAgreement,
-      region,
-      centre,
-      clientDatetime,
+      operationalCentre,
+      project,
       serverDatetime,
       clientUseragent,
       clientIP,
       encryptedData,
+      weightLimitOverride,
+      use2SD,
+      bloodGasAvailable,
+      bloodKetonesAvailable,
+      syringePumpAvailable,
+      infusionPumpAvailable,
+      dropFactor,
     } = row;
 
     if (!encryptedData) {
@@ -117,7 +120,7 @@ async function decryptTable(decryptID) {
     } catch (error) {
       console.error(
         `Failed to parse encryptedData for row ID ${id}:`,
-        error.message
+        error.message,
       );
       continue;
     }
@@ -125,31 +128,39 @@ async function decryptTable(decryptID) {
     const { encryptedKey, encryptedData: encData, iv, authTag } = parsedData;
 
     // Decrypt the data
-    const decryptedObject = decryptData(encryptedKey, encData, iv, authTag);
+    const decryptedData = decryptData(encryptedKey, encData, iv, authTag);
 
-    if (!decryptedObject) {
+    if (!decryptedData) {
       console.error(`Skipping row ID ${id}: Decryption failed.`);
       continue;
     }
 
+    console.error("auditID", auditID);
     // Insert decrypted data into tbl_decrypt
     await connection.execute(
-      `INSERT INTO ${config.api.tables.decrypt} (id, episodeType, auditID, appVersion, patientHash, legalAgreement, region, centre, clientDatetime, serverDatetime, clientUseragent, clientIP, decryptedData) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO ${config.api.database.tables.decrypt} (id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, decryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        episodeType,
         auditID,
+        episodeType,
+        serverCalculations,
+        offlineTimestamp,
         appVersion,
-        patientHash,
         legalAgreement,
-        region,
-        centre,
-        clientDatetime,
+        operationalCentre,
+        project,
         serverDatetime,
         clientUseragent,
         clientIP,
-        decryptedObject,
-      ]
+        decryptedData,
+        weightLimitOverride,
+        use2SD,
+        bloodGasAvailable,
+        bloodKetonesAvailable,
+        syringePumpAvailable,
+        infusionPumpAvailable,
+        dropFactor,
+      ],
     );
 
     console.log(`Successfully decrypted and stored data for row ID ${id}`);
@@ -165,9 +176,6 @@ async function decryptTable(decryptID) {
  * @throws {Error} If no decryptID is provided.
  */
 async function decrypt(decryptID) {
-  if (!decryptID) {
-    throw new Error("No decryptID provided.");
-  }
   const errorTime = new Date().toISOString();
   console.error(errorTime, "Decrypt.js running...");
   decryptTable(decryptID);

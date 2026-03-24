@@ -66,6 +66,10 @@ app.get("/config", (req, res) => {
     config.api.underDevelopment =
       process.env.NODE_ENV === "development" ? true : false;
     config.fetchDatetime = new Date().toISOString();
+    config.api.rsaPublicKey = Buffer.from(
+      process.env.rsaPublicKey,
+      "base64",
+    ).toString("utf-8");
     res.json(config);
   } catch (error) {
     handleError(
@@ -226,7 +230,6 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
  * @description
  *
  * @requires ./modules/insertData - Module for database insertion of calculation data.
- * @requires ./modules/encrypt - Module for encrypting calculated data before storage.
  *
  * @param {object} req - The request object, with validated data and IP address.
  * @param {object} req.body - Contains patient data fields.
@@ -243,7 +246,6 @@ app.post(
   async (req, res) => {
     try {
       const { insertCalculateData } = require("./modules/insertData");
-      const { encrypt } = require("./modules/encrypt");
 
       //get the validated data
       const data = matchedData(req);
@@ -251,33 +253,15 @@ app.post(
       //get the IP address of the client request
       const clientIP = req.ip;
 
-      data.payload.appVersion.api = process.env.version;
-      data.payload.appVersion.apiMode = process.env.NODE_ENV;
+      data.data.appVersion.api = process.env.version;
+      data.data.appVersion.apiMode = process.env.NODE_ENV;
 
-      data.payload.serverCalculations = false;
-
-      //encrypt the data
-      const encryptedData = encrypt({
-        patientSex: data.payload.patientSex,
-        weight: data.payload.weight,
-        patientAge: data.payload.patientAge,
-        glucose: data.payload.glucose,
-        glucoseUnit: data.payload.glucoseUnit,
-        bloodKetones: data.payload.bloodKetones,
-        urineKetones: data.payload.urineKetones,
-        diagnosticFeatures: data.payload.diagnosticFeatures,
-        pH: data.payload.pH,
-        bicarbonate: data.payload.bicarbonate,
-        shockPresent: data.payload.shockPresent,
-        gcs: data.payload.gcs,
-        respiratorySupport: data.payload.respiratorySupport,
-        calculations: data.calculations,
-      });
+      data.data.serverCalculations = false;
 
       //insert the data into the database
       await insertCalculateData(
-        data.payload,
-        encryptedData,
+        data.data,
+        data.encryptedData,
         data.auditID,
         clientIP,
       );

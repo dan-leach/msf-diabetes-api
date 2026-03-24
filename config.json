@@ -28,10 +28,6 @@
     "showConsole": true,
     "database": {
       "name": "msfdiabetes_data_v0",
-      "users": {
-        "select": "msfdiabetes_app_select",
-        "insert": "msfdiabetes_app_insert"
-      },
       "tables": {
         "calculate": "tbl_calculate",
         "decrypt": "tbl_decrypt"

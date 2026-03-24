@@ -222,33 +222,27 @@ const syncOfflineDataRules = [
     .withMessage("Audit ID field must be data type [string].")
     .escape(),
 
-  check("payload")
+  check("data")
     .isObject()
-    .withMessage("Payload field must be data type [object].")
+    .withMessage("Data field must be data type [object].")
     .bail()
     .custom((obj) => {
       if (Object.keys(obj).length === 0) {
-        throw new Error("Payload field must not be an empty object.");
+        throw new Error("Data field must not be an empty object.");
       }
       return true;
     }),
 
-  check("calculations")
+  check("encryptedData")
     .isObject()
-    .withMessage("Calculations field must be data type [object].")
+    .withMessage("Encrypted data field must be data type [object].")
     .bail()
     .custom((obj) => {
       if (Object.keys(obj).length === 0) {
-        throw new Error("Calculations field must not be an empty object.");
+        throw new Error("Encrypted data field must not be an empty object.");
       }
       return true;
     }),
-
-  check("calculationsTimestamp")
-    .isISO8601()
-    .withMessage(
-      "Calculations timestamp field must be data type [ISO8601 datetime].",
-    ),
 ];
 
 // Middleware function to validate the request

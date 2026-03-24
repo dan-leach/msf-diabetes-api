@@ -13,7 +13,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
   try {
     const connection = await mysql.createConnection({
       host: "localhost",
-      user: config.api.database.users.insert,
+      user: process.env.app_insert_user,
       password: process.env.app_insert_key,
       database: config.api.database.name,
     });
@@ -21,8 +21,64 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
     // Prepare SQL statement
     const sql = `
       INSERT INTO ${config.api.database.tables.calculate} (
-        auditID, episodeType, appVersion, serverCalculations, legalAgreement, operationalCentre, project, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        auditID, episodeType, appVersion, serverCalculations, legalAgreement, operationalCentre, project, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor, offlineTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
+
+    data.offlineTimestamp = data.offlineTimestamp
+      ? data.offlineTimestamp
+      : null;
+
+    const paramNames = [
+      "auditID",
+      "episodeType",
+      "appVersion",
+      "serverCalculations",
+      "legalAgreement",
+      "operationalCentre",
+      "project",
+      "clientUseragent",
+      "clientIP",
+      "encryptedData",
+      "weightLimitOverride",
+      "use2SD",
+      "bloodGasAvailable",
+      "bloodKetonesAvailable",
+      "syringePumpAvailable",
+      "infusionPumpAvailable",
+      "dropFactor",
+      "offlineTimestamp",
+    ];
+
+    const params = [
+      auditID,
+      data.episodeType,
+      data.appVersion,
+      data.serverCalculations,
+      data.legalAgreement,
+      data.operationalCentre,
+      data.project,
+      data.clientUseragent,
+      clientIP,
+      encryptedData,
+      data.weightLimitOverride,
+      data.use2SD,
+      data.bloodGasAvailable,
+      data.bloodKetonesAvailable,
+      data.syringePumpAvailable,
+      data.infusionPumpAvailable,
+      data.dropFactor,
+      data.offlineTimestamp,
+    ];
+
+    const bad = paramNames
+      .map((name, i) => ({ name, value: params[i] }))
+      .filter((x) => x.value === undefined);
+
+    if (bad.length) {
+      throw new Error(
+        `Undefined bind params for insertCalculateData: ${bad.map((x) => x.name).join(", ")}`,
+      );
+    }
 
     // Execute SQL statement
     const [result] = await connection.execute(sql, [
@@ -43,6 +99,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
       data.syringePumpAvailable,
       data.infusionPumpAvailable,
       data.dropFactor,
+      data.offlineTimestamp,
     ]);
 
     if (result.affectedRows === 0) {
