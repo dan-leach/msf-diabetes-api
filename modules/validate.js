@@ -273,6 +273,22 @@ const syncOfflineDataRules = [
     }),
 ];
 
+/**
+ * Validation rules for the feedback route.
+ * @type {Array}
+ */
+const feedbackRules = [
+  check("auditID")
+    .isString()
+    .withMessage("Audit ID field must be data type [string].")
+    .escape(),
+
+  check("feedbackText")
+    .isString()
+    .withMessage("Feedback field must be data type [string].")
+    .escape(),
+];
+
 // Middleware function to validate the request
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
@@ -285,5 +301,6 @@ const validateRequest = (req, res, next) => {
 module.exports = {
   calculateRules,
   syncOfflineDataRules,
+  feedbackRules,
   validateRequest,
 };

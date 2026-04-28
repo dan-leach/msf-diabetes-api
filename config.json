@@ -30,7 +30,8 @@
       "name": "msfdiabetes_data_v0",
       "tables": {
         "calculate": "tbl_calculate",
-        "decrypt": "tbl_decrypt"
+        "decrypt": "tbl_decrypt",
+        "feedback": "tbl_feedback"
       }
     }
   },

@@ -22,6 +22,7 @@ const {
   validateRequest,
   calculateRules,
   syncOfflineDataRules,
+  feedbackRules,
 } = require("./modules/validate");
 const { handleError } = require("./modules/handleError");
 const app = express();
@@ -285,6 +286,43 @@ app.post(
     }
   },
 );
+
+/**
+ * Route for adding feedback to the database.
+ *
+ * @route POST /feedback
+ * @summary
+ *
+ * @description
+ *
+ * @requires ./modules/insertData - Module for database insertion of feedback data.
+ *
+ * @param {object} req - The request object, with validated data.
+ * @param {object} req.body - Contains feedback.
+ * @param {object} res - The response object to send confirmation or errors.
+ *
+ * @returns {object} 200 - JSON object with confirmation.
+ * @returns {object} 400 - JSON object with errors if sync fails.
+ * @returns {object} 500 - JSON object with error message if a server error occurs.
+ */
+app.post("/feedback", feedbackRules, validateRequest, async (req, res) => {
+  try {
+    const { insertFeedback } = require("./modules/insertData");
+
+    //get the validated data
+    const data = matchedData(req);
+
+    //insert the feedback into the database
+    await insertFeedback(data.feedbackText, data.auditID);
+
+    //respond to the client with success message
+    res.status(200).json({
+      message: "Feedback submitted successfully",
+    });
+  } catch (error) {
+    handleError(error, 500, "/feedback", "Failed to submit feedback", res);
+  }
+});
 
 /**
  * Route for decrypting previously stored data.
