@@ -23,7 +23,7 @@
       "main": "https://github.com/dan-leach/msf-diabetes-api",
       "changelog": "https://github.com/dan-leach/msf-diabetes-api/wiki/Changelog"
     },
-    "url": "https://dev-api.msf.dka-calculator.co.uk/",
+    "url": "https://api.diabetes.msf.net/",
     "timeoutDuration": 15000,
     "showConsole": true,
     "database": {
@@ -36,12 +36,10 @@
     }
   },
   "client": {
-    "url": "https://msf.dka-calculator.co.uk",
-    "sodiumOsmoUrl": "https://msf.dka-calculator.co.uk/sodium-osmo",
+    "url": "https://diabetes.msf.net",
     "repo": {
       "main": "https://github.com/dan-leach/msf-diabetes",
-      "changelog": "https://github.com/dan-leach/msf-diabetes/wiki/Changelog",
-      "icpChangelog": "https://github.com/dan-leach/msf-diabetes/wiki/Integrated-Care-Pathway-(ICP)-Changelog"
+      "changelog": "https://github.com/dan-leach/msf-diabetes/wiki/Changelog"
     }
   },
   "validation": {
@@ -57,7 +55,7 @@
     },
     "patientAge": {
       "min": 0,
-      "max": 19.01
+      "max": 16
     },
     "dropFactor": [
       {
@@ -170,27 +168,27 @@
   "operationalCentres": [
     {
       "name": "Paris",
-      "projects": ["OCP-12345-ProjectName", "OCP-67890-AnotherProject"]
+      "projects": ["OCP - SS153 - Aweil"]
     },
     {
       "name": "Amsterdam",
-      "projects": ["OCA-12345-ProjectName", "OCA-67890-AnotherProject"]
+      "projects": []
     },
     {
       "name": "Geneva",
-      "projects": ["OCG-12345-ProjectName", "OCG-67890-AnotherProject"]
+      "projects": []
     },
     {
       "name": "Barcelona-Athens",
-      "projects": ["OCBA-12345-ProjectName", "OCBA-67890-AnotherProject"]
+      "projects": []
     },
     {
       "name": "Brussels",
-      "projects": ["OCB-12345-ProjectName", "OCB-67890-AnotherProject"]
+      "projects": []
     },
     {
       "name": "West and Central Africa",
-      "projects": ["WACA-12345-ProjectName", "WACA-67890-AnotherProject"]
+      "projects": []
     }
   ],
   "weightLimits": {
