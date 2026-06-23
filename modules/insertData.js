@@ -1,5 +1,5 @@
+const mysql = require("mysql2/promise");
 const config = require("../config");
-const { dbRun } = require("./db");
 
 /**
  * Inserts audit data into the database.
@@ -11,34 +11,49 @@ const { dbRun } = require("./db");
  */
 async function insertCalculateData(data, encryptedData, auditID, clientIP) {
   try {
+    const connection = await mysql.createConnection({
+      host: "localhost",
+      user: config.api.database.users.insert,
+      password: process.env.app_insert_key,
+      database: config.api.database.name,
+    });
+
+    // Prepare SQL statement
     const sql = `
       INSERT INTO ${config.api.database.tables.calculate} (
         auditID, episodeType, appVersion, serverCalculations, legalAgreement, operationalCentre, project, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringeDriverAvailable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const result = await dbRun(sql, [
+    // Execute SQL statement
+    const [result] = await connection.execute(sql, [
       auditID,
       data.episodeType,
-      JSON.stringify(data.appVersion),
-      data.serverCalculations ? 1 : 0,
-      data.legalAgreement ? 1 : 0,
+      data.appVersion,
+      data.serverCalculations,
+      data.legalAgreement,
       data.operationalCentre,
       data.project,
       data.clientUseragent,
       clientIP,
-      JSON.stringify(encryptedData),
-      data.weightLimitOverride ? 1 : 0,
-      data.use2SD ? 1 : 0,
-      data.bloodGasAvailable ? 1 : 0,
-      data.bloodKetonesAvailable ? 1 : 0,
-      data.syringeDriverAvailable ? 1 : 0,
+      encryptedData,
+      data.weightLimitOverride,
+      data.use2SD,
+      data.bloodGasAvailable,
+      data.bloodKetonesAvailable,
+      data.syringeDriverAvailable,
     ]);
 
-    if (result.changes === 0) {
+    if (result.affectedRows === 0) {
       throw new Error("Audit data could not be logged: No rows affected");
     }
   } catch (error) {
     throw new Error(`Audit data could not be logged: ${error.message}`);
+  } finally {
+    try {
+      await connection.end();
+    } catch {
+      //no connection to close
+    }
   }
 }
 

@@ -1,5 +1,5 @@
+const mysql = require("mysql2/promise");
 const config = require("../config");
-const { dbGet } = require("./db");
 
 const permittedChars = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
@@ -11,19 +11,33 @@ async function generateAuditID() {
   let auditID;
   let isUnique = false;
   try {
+    const connection = await mysql.createConnection({
+      host: "localhost",
+      user: config.api.database.users.select,
+      password: process.env.app_select_key,
+      database: config.api.database.name,
+    });
     while (!isUnique) {
       auditID = generateRandomID(6, permittedChars);
-      const row = await dbGet(
-        `SELECT auditID FROM ${config.api.database.tables.calculate} WHERE auditID = ?`,
+      const [rows] = await connection.execute(
+        `SELECT * FROM ${config.api.database.tables.calculate} WHERE auditID = ?`,
         [auditID]
       );
 
-      if (!row) {
+      if (rows.length === 0) {
         isUnique = true;
       }
     }
   } catch (error) {
-    throw new Error(`Unable to generate audit ID: ${error.message}`);
+    throw new Error(
+      `Unable to generate audit ID: ${error.message}${error.code}`
+    );
+  } finally {
+    try {
+      await connection.end();
+    } catch {
+      //no connection to close
+    }
   }
   return auditID;
 }
