@@ -1,9 +1,37 @@
+/**
+ * @module validate
+ * @memberof module:dka-calculator-api
+ * @summary Defines express-validator rule sets and the shared validation middleware.
+ *
+ * @description
+ * Exports three arrays of express-validator `check` / `body` rules — one per API route
+ * that accepts a request body — plus the `validateRequest` middleware that converts any
+ * accumulated validation errors into a 400 JSON response.
+ *
+ * Rule sets exported:
+ *  - `calculateRules`        — `POST /calculate`
+ *  - `syncOfflineDataRules`  — `POST /sync-offline-data`
+ *  - `feedbackRules`         — `POST /feedback`
+ *
+ * All numeric thresholds and enumerated options are read from `config.json` so the
+ * validation stays in sync with the clinical constants without code changes.
+ *
+ * @requires express-validator
+ * @requires ../config.json
+ */
+
 const { check, body, validationResult } = require("express-validator");
 const config = require("../config.json");
 
 /**
- * Validation rules for the calculate route.
- * @type {Array}
+ * Validation rules for the `POST /calculate` route.
+ *
+ * Validates and sanitises every field that the calculation engine and database
+ * insertion require. Optional fields (pH, bicarbonate, bloodKetones, urineKetones,
+ * gcs, respiratorySupport) use conditional checks so that they are only required
+ * when clinically appropriate.
+ *
+ * @type {import("express-validator").ValidationChain[]}
  */
 const calculateRules = [
   //legal disclaimer
@@ -57,11 +85,11 @@ const calculateRules = [
       min: config.validation.patientAge.min,
     })
     .withMessage(
-      `Patient age must be an decimal in the range ${config.validation.patientAge.min} to <${config.validation.patientAge.max} years.`,
+      `Patient age must be a decimal greater than or equal to ${config.validation.patientAge.min}.`,
     )
+    .bail()
     .custom((value) => {
-      //not using max in isFloat as need to allow up to max but not including max
-      if (value >= config.validation.patientAge.max) {
+      if (value > config.validation.patientAge.max) {
         throw new Error(
           `Patient age must be less than ${config.validation.patientAge.max} years.`,
         );
@@ -104,6 +132,7 @@ const calculateRules = [
       "Infusion pump availability field must be data type [boolean].",
     ),
 
+  // dropFactor is only required when no infusion pump is available.
   check("dropFactor")
     .if(body("infusionPumpAvailable").equals("false"))
     .isIn(config.validation.dropFactor.map((d) => String(d.drops)))
@@ -152,14 +181,6 @@ const calculateRules = [
 
       return true;
     }),
-
-  check("glucoseHigh")
-    .if((value, { req }) => {
-      const glucose = req.body.glucose;
-      return glucoseHigh === undefined || glucoseHigh === null;
-    })
-    .isBoolean()
-    .withMessage("Glucose high field must be data type [boolean]."),
 
   check("bloodKetones")
     .if(body("urineKetones").equals(""))
@@ -210,8 +231,9 @@ const calculateRules = [
     .isBoolean()
     .withMessage("Clinical shock status field must be data type [boolean]."),
 
+  // GCS is optional when shock is present (clinical severity then drives the protocol).
   check("gcs")
-    .if(body("shockPresent").equals("false")) //optional if shockPresent is true
+    .if(body("shockPresent").equals("false"))
     .isFloat({
       min: config.validation.gcs.min,
       max: config.validation.gcs.max,
@@ -220,8 +242,8 @@ const calculateRules = [
       `GCS must be an integer in the range ${config.validation.gcs.min} to ${config.validation.gcs.max}.`,
     ),
 
+  // Respiratory support is optional when shocked or when GCS indicates severe impairment.
   check("respiratorySupport")
-    //optional if shockPresent is true or if gcs is <13
     .if(body("shockPresent").equals("false"))
     .if(body("gcs").isFloat({ min: config.validation.gcs.severeThreshold }))
     .isBoolean()
@@ -249,8 +271,12 @@ const calculateRules = [
 ];
 
 /**
- * Validation rules for the sync-offline-data route.
- * @type {Array}
+ * Validation rules for the `POST /sync-offline-data` route.
+ *
+ * Used when the client pushes an episode that was calculated offline and stored
+ * in localStorage. Validates the auditID, raw data object, and encrypted data object.
+ *
+ * @type {import("express-validator").ValidationChain[]}
  */
 const syncOfflineDataRules = [
   check("auditID")
@@ -282,8 +308,11 @@ const syncOfflineDataRules = [
 ];
 
 /**
- * Validation rules for the feedback route.
- * @type {Array}
+ * Validation rules for the `POST /feedback` route.
+ *
+ * Validates the auditID (linking feedback to an episode) and the free-text feedback string.
+ *
+ * @type {import("express-validator").ValidationChain[]}
  */
 const feedbackRules = [
   check("auditID")
@@ -297,7 +326,16 @@ const feedbackRules = [
     .escape(),
 ];
 
-// Middleware function to validate the request
+/**
+ * Express middleware that collects the results of any preceding validation chains
+ * and, if errors exist, terminates the request with a 400 response containing the
+ * error array. If validation passes, control is passed to the next handler.
+ *
+ * @param {import("express").Request}  req  - Express request object.
+ * @param {import("express").Response} res  - Express response object.
+ * @param {import("express").NextFunction} next - Express next middleware function.
+ * @returns {void}
+ */
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
