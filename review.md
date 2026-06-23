@@ -42,12 +42,12 @@ The HTML working narrative displays `config.insulin.rateOptions[0]` for both the
 
 ---
 
-### B3 — `hypoSpeed` mutates `highSpeed` by reference (MEDIUM)
+### B3 — `hypoSpeed` mutated `highSpeed` by reference (MEDIUM) — fixed
 **File:** `modules/calculateVariables.js` — `calculateBagSpeeds()`
 
 `const hypoSpeed = highSpeed` copies the object reference, not the value. The subsequent `hypoSpeed.working = ...` permanently overwrites `highSpeed.working`. Any code that reads `highSpeed.working` after this line receives the mutated (hypo-prefixed) string instead of the original.
 
-**Fix (already applied in JSDoc update):** Construct a new object rather than reassigning the property:
+**Status:** Fixed during the JSDoc review pass — `hypoSpeed` is now constructed as a new object:
 ```js
 const hypoSpeed = { val: highSpeed.val, working: prefix + highSpeed.working };
 ```
@@ -57,7 +57,7 @@ const hypoSpeed = { val: highSpeed.val, working: prefix + highSpeed.working };
 ### B4 — `checkWeightWithinLimit` throws a primitive string, not an `Error` (LOW)
 **File:** `modules/checkWeightWithinLimit.js`
 
-`throw \`...\`` throws a string literal. The catch block handles it via `.toString()`, so no crash occurs, but stack traces are unavailable and the pattern breaks standard error handling conventions.
+`` throw `...` `` throws a string literal. The catch block handles it via `.toString()`, so no crash occurs, but stack traces are unavailable and the pattern breaks standard error handling conventions.
 
 **Fix:** Replace with `throw new Error(\`...\`)`.
 
@@ -117,7 +117,7 @@ Both modules call `crypto.createPublicKey` / `crypto.createPrivateKey` at module
 ### V4 — CORS open to all origins (MEDIUM)
 **File:** `index.js`
 
-`app.use(cors())` with no options allows any origin to make credentialled cross-origin requests to a clinical API.
+`app.use(cors())` with no options allows any origin to make cross-origin requests to a clinical API.
 
 **Fix:** Pass an explicit `origin` allowlist:
 ```js
@@ -161,7 +161,7 @@ A new MySQL connection is opened and closed on every call to either module. Conn
 ### O2 — `generateAuditID` makes multiple round-trips to check uniqueness (MEDIUM impact)
 **File:** `modules/generateAuditID.js`
 
-The current approach generates a random ID then queries the database to check uniqueness in a loop, potentially making several round-trips. With 31⁶ (~887 million) possible IDs and a small dataset the collision probability is negligible, but the loop has no maximum iteration guard.
+The current approach generates a random ID then queries the database to check uniqueness in a loop, potentially making several round-trips. With 31⁶ (~887 million) possible IDs and a small dataset the collision probability is negligible, but the loop has no maximum retry guard.
 
 **Fix (minimal):** Add a maximum retry limit and throw a descriptive error if it is exceeded. As a longer-term option, use a `INSERT ... WHERE NOT EXISTS` strategy or a UUID.
 
@@ -185,16 +185,7 @@ The calculation functions build HTML working strings inline alongside the numeri
 
 ---
 
-### O5 — Dead import: `sodiumOsmoRules` imported but no route defined (LOW impact)
-**File:** `index.js`
-
-`sodiumOsmoRules` is destructured from `./modules/validate` on line 24 but is never used; no `/sodium-osmo` route is registered in `index.js`.
-
-**Fix:** Remove the unused import, or add the route if it is planned.
-
----
-
-### O6 — `errors` array in `calculateVariables` is initialised but never populated (LOW impact)
+### O5 — `errors` array in `calculateVariables` is initialised but never populated (LOW impact)
 **File:** `modules/calculateVariables.js`
 
 `const errors = []` is declared at the top of `calculateVariables`, included in the return value, and checked in `index.js` (`if (calculations.errors.length)`). However, no code within `calculateVariables` ever pushes to this array — errors are thrown as exceptions instead. The array therefore always returns empty, making the check in `index.js` redundant.

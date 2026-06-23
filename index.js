@@ -1,21 +1,32 @@
 /**
- * @module MSF_Diabetes_Calculator_API The MSF Diabetes Calculator API application setup and routing.
+ * @module dka-calculator-api
+ * @summary MSF Diabetes Calculator API — application entry point, middleware setup, and route definitions.
  *
- * @description This Express server provides various API endpoints including the main calculate route, and the secondary update and sodium-osmo routes.
+ * @description
+ * Bootstraps the Express server and registers all API routes:
+ *
+ *  - `GET  /`                  — Browser redirect to the client application.
+ *  - `GET  /config`            — Returns `config.json` augmented with runtime environment values.
+ *  - `POST /calculate`         — Main clinical endpoint; validates, calculates, encrypts, and stores an episode.
+ *  - `POST /sync-offline-data` — Accepts an episode calculated offline by the client and persists it.
+ *  - `POST /feedback`          — Stores free-text clinician feedback linked to an audit ID.
+ *  - `GET  /decrypt`           — Admin route to decrypt stored patient records by audit ID.
+ *
+ * All routes delegate error handling to `handleError` in `./modules/handleError`.
+ * Input validation is performed by rule sets defined in `./modules/validate`.
  *
  * @requires express
- * @requires cors - To prevent CORS block
- * @requires body-parser - Library to parse request body from JSON
- * @requires crypto - Library to perform hashing
- * @requires express-validator - Library to perform validation
- * @requires ./modules/validate - Rules for validating requests
- * @requires ./modules/handleError - Error logging and notifications
+ * @requires cors
+ * @requires body-parser
+ * @requires express-validator
+ * @requires ./modules/validate
+ * @requires ./modules/handleError
+ * @requires ./config.json
  */
 
 const express = require("express");
-var cors = require("cors");
+const cors = require("cors");
 const bodyParser = require("body-parser");
-const crypto = require("crypto");
 const { matchedData } = require("express-validator");
 const config = require("./config.json");
 const {
@@ -25,24 +36,24 @@ const {
   feedbackRules,
 } = require("./modules/validate");
 const { handleError } = require("./modules/handleError");
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const path = require("path");
-
-//required to get the client IP address as server behind proxy
+//required to get the client IP address as server is behind a proxy
 app.set("trust proxy", 3);
 
 /**
  * @route GET /
- * @summary Redirects users to the main website.
+ * @summary Redirects browser users to the client application.
  *
- * @description This route handles any GET requests made to the API root. Instead of providing an API response,
- * it advises users to visit the main website. The response includes HTML content with a clickable link to the website.
- * This is useful for guiding users who may be accessing the API directly in a browser.
+ * @description
+ * Returns a short HTML response pointing users to the client URL defined in
+ * `config.client.url`. Intended for anyone who navigates to the API root directly
+ * in a browser rather than via the client application.
  *
- * @returns {string} 200 - HTML content that redirects the user to an external website.
+ * @returns {string} 200 - HTML string containing a link to the client URL.
  */
 app.get("/", (req, res) => {
   res.send(
@@ -52,21 +63,31 @@ app.get("/", (req, res) => {
 
 /**
  * @route GET /config
- * @summary Provides the configuration settings to the client.
+ * @summary Returns the application configuration to the client.
  *
- * @description This route sends the contents of the server's config file to the client as a JSON response after
- * adding the version data from environment variables. The config file contains various settings that the client
- * might need, such as API endpoints or feature flags.
+ * @description
+ * Sends `config.json` as a JSON response, augmented with runtime values injected
+ * from environment variables: the API version, last-updated date, deployment mode
+ * (`underDevelopment`), and the RSA public key (decoded from base64 PEM so the
+ * client can use it for offline encryption without a separate key-distribution step).
  *
- * @returns {Object} 200 - JSON object containing the server's configuration.
+ * The client fetches this endpoint on startup and caches the result; all clinical
+ * constants, validation thresholds, and feature flags are therefore controlled
+ * server-side without requiring a client deployment.
+ *
+ * @returns {Object} 200 - The full config object with runtime fields added.
+ * @returns {Object} 500 - JSON error object if the config cannot be assembled.
  */
 app.get("/config", (req, res) => {
   try {
     config.api.version = process.env.version;
     config.api.lastUpdated = process.env.lastUpdated;
+    // Drive the underDevelopment flag from NODE_ENV so staging and production
+    // behave differently without requiring a config.json edit.
     config.api.underDevelopment =
       process.env.NODE_ENV === "development" ? true : false;
     config.fetchDatetime = new Date().toISOString();
+    // Decode the base64 PEM so the client receives a usable key string.
     config.api.rsaPublicKey = Buffer.from(
       process.env.rsaPublicKey,
       "base64",
@@ -84,32 +105,31 @@ app.get("/config", (req, res) => {
 });
 
 /**
- * Primary route for calculating variables and creating new episode entries in the database.
- *
  * @route POST /calculate
- * @summary Processes a calculation request with various checks and inserts a new entry into the database.
+ * @summary Validates patient data, runs all DKA calculations, and persists the episode.
  *
- * @description This endpoint receives a POST request with validated patient and episode data, performs necessary
- * calculations, checks data against predefined rules, and saves it in the database. The endpoint:
- * - Validates the request data using `calculateRules` and `validateRequest` middlewares.
- * - Checks if the patient's weight is within limits or if an override is allowed.
- * - Calculates derived values based on input data and checks for errors.
- * - Hashes sensitive patient data and retrieves IMD (Index of Multiple Deprivation) decile data based on postcode.
- * - Generates a unique audit ID and stores the calculated data in the database.
+ * @description
+ * The primary clinical endpoint. Processing steps:
+ *  1. Input is validated and sanitised by `calculateRules` + `validateRequest` middleware.
+ *  2. Patient weight is checked against 2SD centile limits for the patient's sex and age.
+ *  3. All clinical variables are calculated by `calculateVariables`.
+ *  4. Patient-identifiable fields are encrypted (AES-256-GCM + RSA-OAEP).
+ *  5. A unique audit ID is generated and the episode is written to the database.
+ *  6. The audit ID and full calculation result are returned to the client.
  *
- * @requires ./modules/calculateVariables - Module for calculating variables.
- * @requires ./modules/generateAuditID - Module for generating unique audit IDs.
- * @requires ./modules/insertData - Module for database insertion of calculation data.
- * @requires ./modules/checkWeightWithinLimit - Module to verify if patient weight is within limits.
- * @requires ./modules/encrypt - Module for encrypting calculated data before storage.
+ * @requires ./modules/calculateVariables
+ * @requires ./modules/generateAuditID
+ * @requires ./modules/insertData
+ * @requires ./modules/checkWeightWithinLimit
+ * @requires ./modules/encrypt
  *
- * @param {object} req - The request object, with validated data and IP address.
- * @param {object} req.body - Contains patient data fields.
- * @param {object} res - The response object to send calculation details or errors.
+ * @param {Object} req       - Express request object containing validated patient data.
+ * @param {Object} req.body  - Patient and episode fields (see validate.js — calculateRules).
+ * @param {Object} res       - Express response object.
  *
- * @returns {object} 200 - JSON object with `auditID` and calculated `variables`.
- * @returns {object} 400 - JSON object with errors if validation or calculation checks fail.
- * @returns {object} 500 - JSON object with error message if a server error occurs.
+ * @returns {Object} 200 - `{ auditID: string, calculations: Object }`.
+ * @returns {Object} 400 - `{ errors: [{ msg: string }] }` for validation or clinical check failures.
+ * @returns {Object} 500 - `{ errors: [{ msg: string }] }` for unexpected server errors.
  */
 app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
   try {
@@ -182,7 +202,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
 
     data.serverCalculations = true;
 
-    //encrypt the data
+    //encrypt the patient-identifiable fields before database storage
     const encryptedData = encrypt({
       patientSex: data.patientSex,
       weight: data.weight,
@@ -227,22 +247,29 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
 });
 
 /**
- * Route for adding offline calculation episodes to the database once client back online.
- *
  * @route POST /sync-offline-data
- * @summary
+ * @summary Persists an episode that was calculated offline by the client.
  *
  * @description
+ * When the client application operates without API connectivity, it runs the
+ * calculation locally and stores the result in localStorage. On reconnection,
+ * this endpoint receives the stored episode data (already validated and encrypted
+ * by the client's offline calculator) and writes it to the database.
  *
- * @requires ./modules/insertData - Module for database insertion of calculation data.
+ * The episode retains its client-generated audit ID. `serverCalculations` is set
+ * to `false` to distinguish these records from server-calculated episodes.
  *
- * @param {object} req - The request object, with validated data and IP address.
- * @param {object} req.body - Contains patient data fields.
- * @param {object} res - The response object to send confirmation or errors.
+ * @requires ./modules/insertData
  *
- * @returns {object} 200 - JSON object with confirmation.
- * @returns {object} 400 - JSON object with errors if sync fails.
- * @returns {object} 500 - JSON object with error message if a server error occurs.
+ * @param {Object} req                   - Express request object.
+ * @param {Object} req.body              - Contains `auditID`, `data`, and `encryptedData`.
+ * @param {string} req.body.auditID      - The client-generated audit ID for the episode.
+ * @param {Object} req.body.data         - The full episode data object as submitted by the client.
+ * @param {Object} req.body.encryptedData - The client-encrypted patient data object.
+ * @param {Object} res                   - Express response object.
+ *
+ * @returns {Object} 200 - `{ message: "Offline data synced successfully" }`.
+ * @returns {Object} 500 - `{ errors: [{ msg: string }] }` if the insert fails.
  */
 app.post(
   "/sync-offline-data",
@@ -261,6 +288,7 @@ app.post(
       data.data.appVersion.api = process.env.version;
       data.data.appVersion.apiMode = process.env.NODE_ENV;
 
+      // Mark as offline-calculated so it can be distinguished in reporting.
       data.data.serverCalculations = false;
 
       //insert the data into the database
@@ -288,22 +316,24 @@ app.post(
 );
 
 /**
- * Route for adding feedback to the database.
- *
  * @route POST /feedback
- * @summary
+ * @summary Stores free-text clinician feedback linked to an episode.
  *
  * @description
+ * Accepts a feedback string and the audit ID of the episode it relates to,
+ * and writes the entry to `tbl_feedback`. Feedback is intended for quality
+ * improvement purposes and is reviewed by the project team.
  *
- * @requires ./modules/insertData - Module for database insertion of feedback data.
+ * @requires ./modules/insertData
  *
- * @param {object} req - The request object, with validated data.
- * @param {object} req.body - Contains feedback.
- * @param {object} res - The response object to send confirmation or errors.
+ * @param {Object} req                   - Express request object.
+ * @param {Object} req.body              - Contains `auditID` and `feedbackText`.
+ * @param {string} req.body.auditID      - The audit ID of the associated episode.
+ * @param {string} req.body.feedbackText - The clinician's feedback text (escaped by express-validator).
+ * @param {Object} res                   - Express response object.
  *
- * @returns {object} 200 - JSON object with confirmation.
- * @returns {object} 400 - JSON object with errors if sync fails.
- * @returns {object} 500 - JSON object with error message if a server error occurs.
+ * @returns {Object} 200 - `{ message: "Feedback submitted successfully" }`.
+ * @returns {Object} 500 - `{ errors: [{ msg: string }] }` if the insert fails.
  */
 app.post("/feedback", feedbackRules, validateRequest, async (req, res) => {
   try {
@@ -325,22 +355,27 @@ app.post("/feedback", feedbackRules, validateRequest, async (req, res) => {
 });
 
 /**
- * Route for decrypting previously stored data.
- *
  * @route GET /decrypt
- * @summary Decrypts stored data based on a provided decrypt ID.
+ * @summary Admin route to decrypt and recover stored patient records.
  *
- * @description This endpoint receives a GET request with a `decryptID` query parameter.
- * It uses the decryption module to process the request and return a success response.
+ * @description
+ * Accepts a `decryptID` query parameter (a single audit ID or `"all"`) and
+ * triggers the decryption pipeline in `./modules/decrypt`. Recovered plaintext
+ * records are written to `tbl_decrypt`. The route responds immediately once
+ * decryption has been initiated; the process runs asynchronously.
  *
- * @requires ./modules/decrypt - Module for decrypting stored data.
+ * ⚠️ This route has no authentication. Access should be restricted at the
+ * infrastructure layer until application-level authentication is implemented.
+ * See review.md — V1.
  *
- * @param {object} req - The request object containing query parameters.
- * @param {string} req.query.decryptID - The ID of the encrypted data to be decrypted.
- * @param {object} res - The response object to send the decryption status.
+ * @requires ./modules/decrypt
  *
- * @returns {object} 200 - JSON object confirming decryption was attempted.
- * @returns {object} 500 - JSON object with error message if decryption fails.
+ * @param {Object} req                  - Express request object.
+ * @param {string} req.query.decryptID  - Audit ID to decrypt, or `"all"`.
+ * @param {Object} res                  - Express response object.
+ *
+ * @returns {string} 200 - Confirmation string `"Decrypt run"`.
+ * @returns {Object} 500 - `{ errors: [{ msg: string }] }` if decryption cannot be initiated.
  */
 app.get("/decrypt", async (req, res) => {
   try {
@@ -356,29 +391,26 @@ app.get("/decrypt", async (req, res) => {
 
 /**
  * @route USE *
- * @summary Handles incorrect or undefined API routes.
+ * @summary Catch-all handler for undefined routes.
  *
- * @description This middleware is used as a catch-all for undefined routes, returning a 500 status code and an error message indicating that the API route is incorrect.
- * This is useful for guiding clients when they access a non-existent route.
+ * @description
+ * Returns a 400 response for any request that does not match a registered route,
+ * guiding clients that may have an incorrect API URL.
  *
- * @returns {Object} 500 - JSON object containing an error message.
+ * @returns {string} 400 - `"Incorrect API route"`.
  */
 app.use("*", (req, res) => {
   res.status(400).json("Incorrect API route");
 });
 
 /**
- * @function listen
- * @summary Starts the Express server.
+ * Start the Express server on the port defined by the `PORT` environment variable,
+ * falling back to `3000` if the variable is not set.
  *
- * @description This function starts the Express server on the specified port (3000).
- * Once the server is running, it listens for incoming requests and logs a message to the console indicating the server's status.
- *
- * @param {number} 3000 - The port number the server listens on.
- *
- * @returns {void}
+ * Binds to all network interfaces (`0.0.0.0`) so the server is reachable through
+ * a reverse proxy or within a containerised environment.
  */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
 });
