@@ -84,11 +84,12 @@ const feedbackLimiter = rateLimit({
 
 /**
  * Rate limiter for GET /decrypt.
- * Admin-only route; 10/hour is more than sufficient for any legitimate use.
+ * Admin-only route; 60/hour matches the calculate limiter and gives ample
+ * headroom for bulk decryption runs.
  */
 const decryptLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 10,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
   message: { errors: [{ msg: "Too many requests, please try again later." }] },

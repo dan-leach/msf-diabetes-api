@@ -94,7 +94,7 @@ All limits are per IP address, with a one-hour sliding window. Responses include
 | `POST /calculate` | 60 | RSA + DB write per call; 60/hr ≈ 14× the expected daily maximum |
 | `POST /sync-offline-data` | 60 | Same cost profile as `/calculate` |
 | `POST /feedback` | 20 | Naturally infrequent |
-| `GET /decrypt` | 10 | Admin only |
+| `GET /decrypt` | 60 | Admin only |
 
 ---
 

@@ -95,7 +95,7 @@ All endpoints were publicly accessible with no request throttling. `POST /calcul
 | `POST /calculate` | 60 | 1 hour |
 | `POST /sync-offline-data` | 60 | 1 hour |
 | `POST /feedback` | 20 | 1 hour |
-| `GET /decrypt` | 10 | 1 hour |
+| `GET /decrypt` | 60 | 1 hour |
 
 Standard `RateLimit-*` response headers are enabled so clients can inspect remaining allowances. Limits are enforced before validation middleware runs, so rejected requests incur minimal server work.
 
