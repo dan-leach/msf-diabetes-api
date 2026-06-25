@@ -31,7 +31,6 @@ The following environment variables must be set before the server starts:
 | Variable | Description |
 |---|---|
 | `rsaPublicKey` | Base64-encoded RSA public key (PEM) — used to encrypt patient data before storage |
-| `rsaPrivateKey` | Base64-encoded RSA private key (PEM) — used by the `/decrypt` route |
 | `app_insert_key` | MySQL password for the insert-only database user |
 | `app_select_key` | MySQL password for the select-only database user |
 
@@ -39,12 +38,13 @@ Optional variables:
 
 | Variable | Description |
 |---|---|
+| `rsaPrivateKey` | Base64-encoded RSA private key (PEM) — required only for the `/decrypt` route; if unset, `/decrypt` returns `503` |
 | `apiVersion` | Reported in `/config` response and stamped on each episode record |
 | `clientVersion` | Reported in `/config` response |
 | `lastUpdated` | Reported in `/config` response |
 | `emailKey` | SMTP password — required for error notification emails (production only) |
 | `emailDkimPrivateKey` | DKIM private key for outbound email signing (production only) |
-| `decryptSecret` | Shared secret for the `/decrypt` route — must be sent as `X-Decrypt-Key` header; if unset, the route is disabled |
+| `decryptSecret` | Shared secret for the `/decrypt` route — must be sent as `X-Decrypt-Key` header; if unset, the route returns `401` |
 | `PORT` | Listening port (default: `3000`) |
 
 Start the server:

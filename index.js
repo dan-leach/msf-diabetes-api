@@ -30,7 +30,6 @@
 // on the first request (e.g. when crypto.createPublicKey receives undefined).
 const REQUIRED_ENV_VARS = [
   "rsaPublicKey",    // RSA public key — used by encrypt.js to wrap the AES key
-  "rsaPrivateKey",   // RSA private key — used by decrypt.js to unwrap the AES key
   "app_insert_key",  // MySQL password for the insert-only database user
   "app_select_key",  // MySQL password for the select-only database user
 ];
@@ -458,6 +457,11 @@ app.get("/decrypt", decryptLimiter, async (req, res) => {
   const secret = process.env.decryptSecret;
   if (!secret || req.headers["x-decrypt-key"] !== secret) {
     return res.status(401).json({ errors: [{ msg: "Unauthorised" }] });
+  }
+
+  // Require the RSA private key — without it decryption is impossible.
+  if (!process.env.rsaPrivateKey) {
+    return res.status(503).json({ errors: [{ msg: "Decrypt unavailable: rsaPrivateKey not configured" }] });
   }
 
   try {
