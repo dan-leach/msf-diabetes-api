@@ -27,9 +27,9 @@ const config = require("../config");
 /**
  * Inserts a completed DKA episode record into the `tbl_calculate` table.
  *
- * The function uses the insert-only database user (`config.api.database.users.insert`)
- * authenticated with the `app_insert_key` environment variable, ensuring the
- * connection has no SELECT, UPDATE, or DELETE privileges.
+ * The function uses the insert-only database user (`app_insert_user` /
+ * `app_insert_key` environment variables), ensuring the connection has no
+ * SELECT, UPDATE, or DELETE privileges.
  *
  * @async
  * @param {Object}  data                         - Validated and processed episode data.
@@ -42,9 +42,13 @@ const config = require("../config");
  * @param {string}  data.clientUseragent         - Browser user-agent string from the client.
  * @param {boolean} data.weightLimitOverride     - Whether the 2SD weight limit was overridden.
  * @param {boolean} data.use2SD                  - Whether the 2SD weight lookup was used.
+ * @param {boolean} data.useYearsMonths          - Whether age was entered as years + months.
  * @param {boolean} data.bloodGasAvailable       - Equipment availability flag.
  * @param {boolean} data.bloodKetonesAvailable   - Equipment availability flag.
- * @param {boolean} data.syringeDriverAvailable  - Equipment availability flag.
+ * @param {boolean} data.syringePumpAvailable    - Equipment availability flag.
+ * @param {boolean} data.infusionPumpAvailable   - Equipment availability flag.
+ * @param {number}  [data.dropFactor]            - Drops per mL of the giving set (used when no infusion pump is available).
+ * @param {number}  [data.offlineTimestamp]      - Epoch-ms timestamp when an offline episode was created; null for online episodes.
  * @param {Object}  encryptedData                - Output of `encrypt()`: `{ encryptedData, encryptedKey, iv, authTag }`.
  * @param {string}  auditID                      - Unique 6-character episode identifier.
  * @param {string}  clientIP                     - Client IP address from the request.
@@ -57,7 +61,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
   try {
     connection = await mysql.createConnection({
       host: "localhost",
-      user: config.api.database.users.insert,
+      user: process.env.app_insert_user,
       password: process.env.app_insert_key,
       database: config.api.database.name,
     });
@@ -65,10 +69,35 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
     // Parameterised INSERT — all values passed separately to prevent SQL injection.
     const sql = `
       INSERT INTO ${config.api.database.tables.calculate} (
-        auditID, episodeType, appVersion, serverCalculations, legalAgreement, operationalCentre, project, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, bloodGasAvailable, bloodKetonesAvailable, syringeDriverAvailable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        auditID, episodeType, appVersion, serverCalculations, legalAgreement, operationalCentre, project, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor, offlineTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const [result] = await connection.execute(sql, [
+    // Online episodes have no offline timestamp; normalise undefined to null.
+    data.offlineTimestamp = data.offlineTimestamp ? data.offlineTimestamp : null;
+
+    const paramNames = [
+      "auditID",
+      "episodeType",
+      "appVersion",
+      "serverCalculations",
+      "legalAgreement",
+      "operationalCentre",
+      "project",
+      "clientUseragent",
+      "clientIP",
+      "encryptedData",
+      "weightLimitOverride",
+      "use2SD",
+      "useYearsMonths",
+      "bloodGasAvailable",
+      "bloodKetonesAvailable",
+      "syringePumpAvailable",
+      "infusionPumpAvailable",
+      "dropFactor",
+      "offlineTimestamp",
+    ];
+
+    const params = [
       auditID,
       data.episodeType,
       data.appVersion,
@@ -81,10 +110,30 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
       encryptedData,
       data.weightLimitOverride,
       data.use2SD,
+      data.useYearsMonths,
       data.bloodGasAvailable,
       data.bloodKetonesAvailable,
-      data.syringeDriverAvailable,
-    ]);
+      data.syringePumpAvailable,
+      data.infusionPumpAvailable,
+      data.dropFactor,
+      data.offlineTimestamp,
+    ];
+
+    // Guard against undefined bind parameters — MySQL rejects them with an
+    // opaque error, so surface the offending field name(s) instead.
+    const bad = paramNames
+      .map((name, i) => ({ name, value: params[i] }))
+      .filter((x) => x.value === undefined);
+
+    if (bad.length) {
+      throw new Error(
+        `Undefined bind params for insertCalculateData: ${bad
+          .map((x) => x.name)
+          .join(", ")}`
+      );
+    }
+
+    const [result] = await connection.execute(sql, params);
 
     if (result.affectedRows === 0) {
       throw new Error("Audit data could not be logged: No rows affected");
@@ -117,7 +166,7 @@ async function insertFeedback(feedbackText, auditID) {
   try {
     const connection = await mysql.createConnection({
       host: "localhost",
-      user: config.api.database.users.insert,
+      user: process.env.app_insert_user,
       password: process.env.app_insert_key,
       database: config.api.database.name,
     });

@@ -283,9 +283,13 @@ The API targets MySQL. Two database users with least-privilege access are used:
 | `encryptedData` | TEXT | JSON blob — see Encryption model |
 | `weightLimitOverride` | BOOL | |
 | `use2SD` | BOOL | |
+| `useYearsMonths` | BOOL | Whether age was entered as years + months |
 | `bloodGasAvailable` | BOOL | |
 | `bloodKetonesAvailable` | BOOL | |
-| `syringeDriverAvailable` | BOOL | |
+| `syringePumpAvailable` | BOOL | |
+| `infusionPumpAvailable` | BOOL | |
+| `dropFactor` | INT | Drops/mL of giving set (when no infusion pump) |
+| `offlineTimestamp` | DATETIME | Client timestamp for synced offline episodes; null otherwise |
 | `serverDatetime` | DATETIME | Set by MySQL `DEFAULT CURRENT_TIMESTAMP` |
 
 ---

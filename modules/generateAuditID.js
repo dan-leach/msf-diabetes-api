@@ -53,7 +53,7 @@ async function generateAuditID() {
     // Use the select-only database user — this function never needs to write.
     connection = await mysql.createConnection({
       host: "localhost",
-      user: config.api.database.users.select,
+      user: process.env.app_select_user,
       password: process.env.app_select_key,
       database: config.api.database.name,
     });
