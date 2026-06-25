@@ -40,14 +40,14 @@ function decryptData(encryptedAESKey, encryptedData, iv, authTag) {
         padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
         oaepHash: "sha256",
       },
-      Buffer.from(encryptedAESKey, "base64"),
+      Buffer.from(encryptedAESKey, "base64")
     );
 
     // Step 2: Decrypt the data using AES-256-GCM
     const decipher = crypto.createDecipheriv(
       "aes-256-gcm",
       decryptedAESKey,
-      Buffer.from(iv, "hex"),
+      Buffer.from(iv, "hex")
     );
 
     // Step 3: Set the authentication tag
@@ -78,12 +78,20 @@ async function decryptTable(decryptID) {
     database: config.api.database.name,
   });
 
-  // Fetch encrypted rows
-  const query = decryptID
-    ? `SELECT id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor FROM ${config.api.database.tables.calculate} WHERE auditID = ?`
-    : `SELECT id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor FROM ${config.api.database.tables.calculate}`;
+  // Columns mirror the MSF `tbl_calculate` schema (see insertData.js).
+  const columns =
+    "id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor";
 
-  const [rows] = await connection.execute(query, decryptID ? [decryptID] : []);
+  // Fetch encrypted rows — a single record by audit ID, or all records.
+  const query =
+    decryptID === "all"
+      ? `SELECT ${columns} FROM ${config.api.database.tables.calculate}`
+      : `SELECT ${columns} FROM ${config.api.database.tables.calculate} WHERE auditID = ?`;
+
+  const [rows] = await connection.execute(
+    query,
+    decryptID === "all" ? [] : [decryptID]
+  );
 
   for (const row of rows) {
     const {
@@ -121,7 +129,7 @@ async function decryptTable(decryptID) {
     } catch (error) {
       console.error(
         `Failed to parse encryptedData for row ID ${id}:`,
-        error.message,
+        error.message
       );
       continue;
     }
@@ -136,7 +144,6 @@ async function decryptTable(decryptID) {
       continue;
     }
 
-    console.error("auditID", auditID);
     // Insert decrypted data into tbl_decrypt
     await connection.execute(
       `INSERT INTO ${config.api.database.tables.decrypt} (id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, decryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -162,7 +169,7 @@ async function decryptTable(decryptID) {
         syringePumpAvailable,
         infusionPumpAvailable,
         dropFactor,
-      ],
+      ]
     );
 
     console.log(`Successfully decrypted and stored data for row ID ${id}`);
@@ -178,6 +185,9 @@ async function decryptTable(decryptID) {
  * @throws {Error} If no decryptID is provided.
  */
 async function decrypt(decryptID) {
+  if (!decryptID) {
+    throw new Error("No decryptID provided.");
+  }
   const errorTime = new Date().toISOString();
   console.error(errorTime, "Decrypt.js running...");
   decryptTable(decryptID);
