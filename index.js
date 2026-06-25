@@ -377,9 +377,17 @@ app.post("/feedback", feedbackRules, validateRequest, async (req, res) => {
  * @param {Object} res                  - Express response object.
  *
  * @returns {string} 200 - Confirmation string `"Decrypt run"`.
+ * @returns {Object} 401 - `{ errors: [{ msg: string }] }` if the secret header is missing or incorrect.
  * @returns {Object} 500 - `{ errors: [{ msg: string }] }` if decryption cannot be initiated.
  */
 app.get("/decrypt", async (req, res) => {
+  // Require a matching secret in the X-Decrypt-Key header.
+  // Set the decryptSecret environment variable to enable this route.
+  const secret = process.env.decryptSecret;
+  if (!secret || req.headers["x-decrypt-key"] !== secret) {
+    return res.status(401).json({ errors: [{ msg: "Unauthorised" }] });
+  }
+
   try {
     const { decrypt } = require("./modules/decrypt");
 

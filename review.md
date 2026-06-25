@@ -59,27 +59,28 @@ const hypoSpeed = { val: highSpeed.val, working: prefix + highSpeed.working };
 
 ---
 
-### B6 — Implicit global variable in `handleError` (LOW)
+### B6 — Implicit global variable in `handleError` (LOW) — fixed
 **File:** `modules/handleError.js`
 
-The `html` variable on the error-email path is assigned without a declaration keyword, creating an implicit global in non-strict mode:
-
-```js
-html = `<p>route: ${route}<br>...`; // ← missing let/const
-```
-
-**Fix:** Add `const html =`.
+The `html` variable on the error-email path was assigned without a declaration keyword, creating an implicit global in non-strict mode. Fixed by adding `const`.
 
 ---
 
 ## Vulnerabilities
 
-### V1 — No authentication on `/decrypt` endpoint (HIGH)
+### V1 — No authentication on `/decrypt` endpoint — fixed
 **File:** `index.js`
 
-`GET /decrypt?decryptID=<id>` triggers database retrieval and RSA decryption of a patient record with no authentication, API key check, or IP allowlist. Any caller who knows (or guesses) a valid auditID can trigger decryption of that record.
+`GET /decrypt?decryptID=<id>` had no authentication. In practice, decryption would fail without the RSA private key present in the environment (where it does not live by default), so the practical exposure was limited. Nonetheless, the endpoint is now protected by a shared-secret header check.
 
-**Fix:** Protect the route with at minimum a server-side secret passed as a header, and consider restricting to specific IP ranges (e.g. the server's own management network).
+**Implementation:** A `decryptSecret` environment variable must be set on the server. Every request to `/decrypt` must include a matching `X-Decrypt-Key` header; requests without it receive a `401 Unauthorised` response immediately, before any decryption logic runs. If `decryptSecret` is not set, the route is effectively disabled.
+
+```js
+const secret = process.env.decryptSecret;
+if (!secret || req.headers["x-decrypt-key"] !== secret) {
+  return res.status(401).json({ errors: [{ msg: "Unauthorised" }] });
+}
+```
 
 ---
 

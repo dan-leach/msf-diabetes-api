@@ -51,7 +51,7 @@ function handleError(
 
   // Send email alert if unexpected error
   if (statusCode === 500) {
-    html = `
+    const html = `
           <p>route: ${route}<br>
           errorMessage: ${error.message}<br>
           errorTime: ${errorTime}<br>
