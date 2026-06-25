@@ -43,6 +43,7 @@ Optional variables:
 | `lastUpdated` | Reported in `/config` response |
 | `emailKey` | SMTP password — required for error notification emails (production only) |
 | `emailDkimPrivateKey` | DKIM private key for outbound email signing (production only) |
+| `decryptSecret` | Shared secret for the `/decrypt` route — must be sent as `X-Decrypt-Key` header; if unset, the route is disabled |
 | `PORT` | Listening port (default: `3000`) |
 
 Start the server:
