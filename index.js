@@ -58,7 +58,7 @@ const { handleError } = require("./modules/handleError");
 
 const app = express();
 app.use(cors({ origin: config.client.url }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "10kb" }));
 
 /**
  * Rate limiter for GET /config.

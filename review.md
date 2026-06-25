@@ -137,12 +137,11 @@ app.use(cors({ origin: config.client.url }));
 
 ---
 
-### V6 — No explicit request body size limit (LOW)
+### V6 — No explicit request body size limit (LOW) — fixed
 **File:** `index.js`
 
-`body-parser` defaults to 100 kB. This is not explicitly configured, making it easy to miss and potentially easy to change accidentally. For an API that only expects small JSON payloads, a tighter explicit limit (e.g. `10kb`) reduces exposure to large-payload attacks.
+`body-parser` defaulted to 100 kB with no explicit configuration. Fixed by setting a 10 kB limit, appropriate for the small JSON payloads this API expects:
 
-**Fix:**
 ```js
 app.use(bodyParser.json({ limit: "10kb" }));
 ```
