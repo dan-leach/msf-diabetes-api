@@ -119,24 +119,21 @@ if (missingEnvVars.length > 0) {
 
 ---
 
-### V4 — CORS open to all origins (MEDIUM)
+### V4 — CORS open to all origins (LOW) — fixed
 **File:** `index.js`
 
-`app.use(cors())` with no options allows any origin to make cross-origin requests to a clinical API.
+`app.use(cors())` with no options allowed any origin to make cross-origin requests. Because the API has no cookie or session-based authentication, the traditional CSRF risk did not directly apply, but any website could insert fake episode records into the audit database regardless of volume (rate limiting caps quantity, not origin). Fixed by restricting allowed origins to `config.client.url`:
 
-**Fix:** Pass an explicit `origin` allowlist:
 ```js
-app.use(cors({ origin: [config.client.url] }));
+app.use(cors({ origin: config.client.url }));
 ```
 
 ---
 
-### V5 — `trust proxy` depth may not match deployment topology (LOW)
+### V5 — `trust proxy` depth (LOW) — not applicable
 **File:** `index.js`
 
-`app.set("trust proxy", 3)` instructs Express to trust three proxy hops when reading the client IP. If the actual deployment sits behind fewer proxies, a malicious caller can spoof `X-Forwarded-For` to fake their IP address in the audit log.
-
-**Fix:** Set the trust depth to match the actual number of reverse proxies in front of the application (typically 1 for a single Nginx/load-balancer layer).
+`app.set("trust proxy", 3)` is correct for the production deployment topology (Cloudflare + reverse proxy chain). No change required.
 
 ---
 

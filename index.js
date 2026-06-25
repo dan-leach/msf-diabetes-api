@@ -57,7 +57,7 @@ const {
 const { handleError } = require("./modules/handleError");
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: config.client.url }));
 app.use(bodyParser.json());
 
 /**
