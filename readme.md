@@ -71,7 +71,6 @@ node index.js
 │   ├── encrypt.js              # AES-256-GCM encryption + RSA-OAEP key wrapping
 │   ├── decrypt.js              # RSA-OAEP key unwrapping + AES-256-GCM decryption
 │   └── handleError.js          # Centralised error logging and optional email alert
-└── review.md                   # Bugs, vulnerabilities and optimisation notes
 ```
 
 ---
@@ -186,6 +185,33 @@ Each object within `calculations` contains a `val` (the numeric result) and a `w
 
 ---
 
+### `POST /sync-offline-data`
+
+Accepts an episode that was calculated offline by the client and persists it to the database. The episode retains its client-generated audit ID; `serverCalculations` is recorded as `false` to distinguish these records from server-calculated episodes.
+
+| Body field | Type | Notes |
+|---|---|---|
+| `auditID` | string | Client-generated audit ID for the episode |
+| `data` | object | Full episode data object as submitted by the client |
+| `encryptedData` | object | Client-encrypted patient data object |
+
+**Success response — `200`:** `{ "message": "Offline data synced successfully" }`
+
+---
+
+### `POST /feedback`
+
+Stores free-text clinician feedback linked to an episode audit ID.
+
+| Body field | Type | Notes |
+|---|---|---|
+| `auditID` | string | Audit ID of the associated episode |
+| `feedbackText` | string | Free-text feedback (escaped by express-validator) |
+
+**Success response — `200`:** `{ "message": "Feedback submitted successfully" }`
+
+---
+
 ### `GET /decrypt`
 
 Triggers decryption of one or all stored patient records and writes the plaintext results to `tbl_decrypt`.
@@ -194,7 +220,7 @@ Triggers decryption of one or all stored patient records and writes the plaintex
 |---|---|
 | `decryptID` | An auditID string, or `"all"` to process every record |
 
-> ⚠️ This route has no authentication. See [review.md](review.md) — V1.
+**Authentication:** Requires the `X-Decrypt-Key` request header to match the `decryptSecret` environment variable. Requests with a missing or incorrect header receive `401 Unauthorised`. If `decryptSecret` is not set on the server, the route is effectively disabled.
 
 ---
 

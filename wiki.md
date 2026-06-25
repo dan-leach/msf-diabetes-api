@@ -121,7 +121,7 @@ The private key must never appear in the codebase, logs, or configuration files.
 
 ### Decryption access
 
-The `/decrypt` endpoint provides a mechanism to recover plaintext patient data for authorised purposes (e.g. clinical audit, data export). **This endpoint currently has no authentication.** Access should be restricted at the network/infrastructure layer (e.g. IP allowlist, VPN requirement) until application-layer authentication is implemented. See [review.md](review.md) — V1.
+The `/decrypt` endpoint provides a mechanism to recover plaintext patient data for authorised purposes (e.g. clinical audit, data export). The route is protected by a shared-secret header check: the caller must supply an `X-Decrypt-Key` header whose value matches the `decryptSecret` environment variable. If `decryptSecret` is not set on the server, the route is completely disabled. Additional restriction at the network layer (e.g. IP allowlist or VPN) is recommended as a second layer of defence.
 
 ### Data minimisation
 
@@ -202,16 +202,15 @@ The `underDevelopment` flag also causes the client to target the development API
 
 ## 11. Known issues and technical debt
 
-See [review.md](review.md) for the full list. The most significant items for project planning are:
+All bugs and vulnerabilities identified in the initial code review have been resolved. The following optimisations remain open for future consideration:
 
-| Ref | Severity | Summary |
+| Ref | Impact | Summary |
 |---|---|---|
-| B1 | HIGH | Double HTTP response possible on validation failure in `/calculate` |
-| V1 | HIGH | `/decrypt` has no authentication |
-| V2 | HIGH | No rate limiting on any endpoint |
-| O1 | HIGH | Per-request DB connections — connection pooling not implemented |
-| V4 | MEDIUM | CORS open to all origins |
-| B3 | MEDIUM | `hypoSpeed` mutates `highSpeed` by reference |
+| O1 | HIGH | Per-request MySQL connections — a connection pool would reduce latency and DB load |
+| O2 | MEDIUM | `generateAuditID` uniqueness loop has no maximum retry guard |
+| O3 | LOW | `config.json` is loaded inconsistently across modules (top-level vs. inside function body) |
+| O4 | LOW | Clinical calculation logic is tightly coupled to HTML presentation strings, making unit testing harder |
+| O5 | LOW | `errors` array in `calculateVariables` is initialised but never populated — the check in `index.js` is therefore always false |
 
 ---
 
