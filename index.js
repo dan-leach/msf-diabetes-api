@@ -25,6 +25,23 @@
  * @requires express-rate-limit
  */
 
+// Validate required environment variables before any modules are loaded.
+// Failing fast here produces a clear diagnostic rather than a cryptic crash
+// on the first request (e.g. when crypto.createPublicKey receives undefined).
+const REQUIRED_ENV_VARS = [
+  "rsaPublicKey",    // RSA public key — used by encrypt.js to wrap the AES key
+  "rsaPrivateKey",   // RSA private key — used by decrypt.js to unwrap the AES key
+  "app_insert_key",  // MySQL password for the insert-only database user
+  "app_select_key",  // MySQL password for the select-only database user
+];
+const missingEnvVars = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+if (missingEnvVars.length > 0) {
+  console.error(
+    `[startup] Missing required environment variable(s): ${missingEnvVars.join(", ")}. Server will not start.`,
+  );
+  process.exit(1);
+}
+
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");

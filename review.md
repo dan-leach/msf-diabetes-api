@@ -101,12 +101,21 @@ Standard `RateLimit-*` response headers are enabled so clients can inspect remai
 
 ---
 
-### V3 — RSA keys crash the server if environment variables are absent (MEDIUM)
-**Files:** `modules/encrypt.js`, `modules/decrypt.js`
+### V3 — RSA keys crash the server if environment variables are absent (MEDIUM) — fixed
+**Files:** `index.js`, `modules/encrypt.js`, `modules/decrypt.js`
 
-Both modules call `crypto.createPublicKey` / `crypto.createPrivateKey` at module-load time. If `rsaPublicKey` or `rsaPrivateKey` is not set, Node throws during `require()` and the process exits with no helpful diagnostic message.
+Both encrypt and decrypt modules call `crypto.createPublicKey` / `crypto.createPrivateKey` at module-load time. If `rsaPublicKey` or `rsaPrivateKey` is not set, the process would throw a cryptic error on the first request to `/calculate` or `/decrypt` rather than at startup.
 
-**Fix:** Validate required environment variables at startup in `index.js` and exit with a clear message; or lazy-load the key objects on first use.
+Fixed by adding an explicit startup guard at the very top of `index.js`, before any `require` calls, that checks all four required environment variables and exits with a descriptive message if any are absent:
+
+```js
+const REQUIRED_ENV_VARS = ["rsaPublicKey", "rsaPrivateKey", "app_insert_key", "app_select_key"];
+const missingEnvVars = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+if (missingEnvVars.length > 0) {
+  console.error(`[startup] Missing required environment variable(s): ${missingEnvVars.join(", ")}. Server will not start.`);
+  process.exit(1);
+}
+```
 
 ---
 
