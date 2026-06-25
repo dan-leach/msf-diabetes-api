@@ -84,12 +84,20 @@ if (!secret || req.headers["x-decrypt-key"] !== secret) {
 
 ---
 
-### V2 — No rate limiting (HIGH)
+### V2 — No rate limiting (HIGH) — fixed
 **File:** `index.js`
 
-All endpoints are publicly accessible with no request throttling. `POST /calculate` performs RSA public-key encryption and a database write on every call. A sustained flood of requests could exhaust server resources or rack up database connection costs.
+All endpoints were publicly accessible with no request throttling. `POST /calculate` performs RSA public-key encryption and a database write on every call, making a sustained flood particularly expensive. Fixed by adding `express-rate-limit` middleware with per-route limits sized to typical usage (~100 real episodes/day/IP) with generous leeway:
 
-**Fix:** Add [`express-rate-limit`](https://github.com/express-rate-limit/express-rate-limit) middleware, with a stricter limit on `/calculate` than on `/config`.
+| Route | Limit | Window |
+|---|---|---|
+| `GET /config` | 200 | 1 hour |
+| `POST /calculate` | 60 | 1 hour |
+| `POST /sync-offline-data` | 60 | 1 hour |
+| `POST /feedback` | 20 | 1 hour |
+| `GET /decrypt` | 10 | 1 hour |
+
+Standard `RateLimit-*` response headers are enabled so clients can inspect remaining allowances. Limits are enforced before validation middleware runs, so rejected requests incur minimal server work.
 
 ---
 

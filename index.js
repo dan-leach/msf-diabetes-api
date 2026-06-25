@@ -22,11 +22,13 @@
  * @requires ./modules/validate
  * @requires ./modules/handleError
  * @requires ./config.json
+ * @requires express-rate-limit
  */
 
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const rateLimit = require("express-rate-limit");
 const { matchedData } = require("express-validator");
 const config = require("./config.json");
 const {
@@ -40,6 +42,57 @@ const { handleError } = require("./modules/handleError");
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+/**
+ * Rate limiter for GET /config.
+ * Higher allowance: the PWA fetches config on startup, SW revalidation, and on
+ * navigation to /privacy-policy, so several hits per session per user are normal.
+ */
+const configLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { errors: [{ msg: "Too many requests, please try again later." }] },
+});
+
+/**
+ * Rate limiter for POST /calculate and POST /sync-offline-data.
+ * Each call triggers RSA encryption and a database write, making these the most
+ * expensive endpoints to abuse. 60/hour = 1,440/day, roughly 14× the expected
+ * peak of ~100 real episodes per day per IP.
+ */
+const calculateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { errors: [{ msg: "Too many requests, please try again later." }] },
+});
+
+/**
+ * Rate limiter for POST /feedback.
+ * Naturally infrequent; 20/hour is still very generous for legitimate use.
+ */
+const feedbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { errors: [{ msg: "Too many requests, please try again later." }] },
+});
+
+/**
+ * Rate limiter for GET /decrypt.
+ * Admin-only route; 10/hour is more than sufficient for any legitimate use.
+ */
+const decryptLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { errors: [{ msg: "Too many requests, please try again later." }] },
+});
 
 //required to get the client IP address as server is behind a proxy
 app.set("trust proxy", 3);
@@ -78,7 +131,7 @@ app.get("/", (req, res) => {
  * @returns {Object} 200 - The full config object with runtime fields added.
  * @returns {Object} 500 - JSON error object if the config cannot be assembled.
  */
-app.get("/config", (req, res) => {
+app.get("/config", configLimiter, (req, res) => {
   try {
     config.api.version = process.env.version;
     config.api.lastUpdated = process.env.lastUpdated;
@@ -131,7 +184,7 @@ app.get("/config", (req, res) => {
  * @returns {Object} 400 - `{ errors: [{ msg: string }] }` for validation or clinical check failures.
  * @returns {Object} 500 - `{ errors: [{ msg: string }] }` for unexpected server errors.
  */
-app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
+app.post("/calculate", calculateLimiter, calculateRules, validateRequest, async (req, res) => {
   try {
     const { calculateVariables } = require("./modules/calculateVariables");
     const { generateAuditID } = require("./modules/generateAuditID");
@@ -275,6 +328,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
  */
 app.post(
   "/sync-offline-data",
+  calculateLimiter,
   syncOfflineDataRules,
   validateRequest,
   async (req, res) => {
@@ -337,7 +391,7 @@ app.post(
  * @returns {Object} 200 - `{ message: "Feedback submitted successfully" }`.
  * @returns {Object} 500 - `{ errors: [{ msg: string }] }` if the insert fails.
  */
-app.post("/feedback", feedbackRules, validateRequest, async (req, res) => {
+app.post("/feedback", feedbackLimiter, feedbackRules, validateRequest, async (req, res) => {
   try {
     const { insertFeedback } = require("./modules/insertData");
 
@@ -380,7 +434,7 @@ app.post("/feedback", feedbackRules, validateRequest, async (req, res) => {
  * @returns {Object} 401 - `{ errors: [{ msg: string }] }` if the secret header is missing or incorrect.
  * @returns {Object} 500 - `{ errors: [{ msg: string }] }` if decryption cannot be initiated.
  */
-app.get("/decrypt", async (req, res) => {
+app.get("/decrypt", decryptLimiter, async (req, res) => {
   // Require a matching secret in the X-Decrypt-Key header.
   // Set the decryptSecret environment variable to enable this route.
   const secret = process.env.decryptSecret;

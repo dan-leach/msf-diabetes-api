@@ -13,6 +13,7 @@ A Node.js / Express REST API that performs clinical calculations for the managem
 | Runtime | Node.js 20 |
 | Framework | Express 4 |
 | Validation | express-validator 7 |
+| Rate limiting | express-rate-limit |
 | Encryption | Node.js `crypto` (AES-256-GCM + RSA-OAEP) |
 | Database | MySQL 2 (`mysql2/promise`) |
 | Email | Nodemailer 6 |
@@ -80,6 +81,20 @@ node index.js
 ### `GET /`
 
 Returns a brief HTML redirect message pointing users to the client application URL.
+
+---
+
+### Rate limits
+
+All limits are per IP address, with a one-hour sliding window. Responses include standard `RateLimit-*` headers so clients can inspect their remaining allowance.
+
+| Route | Limit / hour | Reasoning |
+|---|---|---|
+| `GET /config` | 200 | Fetched on startup, SW revalidation, and `/privacy-policy` navigation |
+| `POST /calculate` | 60 | RSA + DB write per call; 60/hr ≈ 14× the expected daily maximum |
+| `POST /sync-offline-data` | 60 | Same cost profile as `/calculate` |
+| `POST /feedback` | 20 | Naturally infrequent |
+| `GET /decrypt` | 10 | Admin only |
 
 ---
 
