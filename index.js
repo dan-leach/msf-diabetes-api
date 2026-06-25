@@ -29,9 +29,9 @@
 // Failing fast here produces a clear diagnostic rather than a cryptic crash
 // on the first request (e.g. when crypto.createPublicKey receives undefined).
 const REQUIRED_ENV_VARS = [
-  "rsaPublicKey",    // RSA public key — used by encrypt.js to wrap the AES key
-  "app_insert_key",  // MySQL password for the insert-only database user
-  "app_select_key",  // MySQL password for the select-only database user
+  "rsaPublicKey", // RSA public key — used by encrypt.js to wrap the AES key
+  "app_insert_key", // MySQL password for the insert-only database user
+  "app_select_key", // MySQL password for the select-only database user
 ];
 const missingEnvVars = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
 if (missingEnvVars.length > 0) {
@@ -201,122 +201,128 @@ app.get("/config", configLimiter, (req, res) => {
  * @returns {Object} 400 - `{ errors: [{ msg: string }] }` for validation or clinical check failures.
  * @returns {Object} 500 - `{ errors: [{ msg: string }] }` for unexpected server errors.
  */
-app.post("/calculate", calculateLimiter, calculateRules, validateRequest, async (req, res) => {
-  try {
-    const { calculateVariables } = require("./modules/calculateVariables");
-    const { generateAuditID } = require("./modules/generateAuditID");
-    const { insertCalculateData } = require("./modules/insertData");
-    const {
-      checkWeightWithinLimit,
-    } = require("./modules/checkWeightWithinLimit");
-    const { encrypt } = require("./modules/encrypt");
-
-    //get the validated data
-    const data = matchedData(req);
-
-    //check the weight is within limits or override is true
-    const check = checkWeightWithinLimit(data);
+app.post(
+  "/calculate",
+  calculateLimiter,
+  calculateRules,
+  validateRequest,
+  async (req, res) => {
     try {
-      if (!check.pass) {
-        throw new Error(check.error);
+      const { calculateVariables } = require("./modules/calculateVariables");
+      const { generateAuditID } = require("./modules/generateAuditID");
+      const { insertCalculateData } = require("./modules/insertData");
+      const {
+        checkWeightWithinLimit,
+      } = require("./modules/checkWeightWithinLimit");
+      const { encrypt } = require("./modules/encrypt");
+
+      //get the validated data
+      const data = matchedData(req);
+
+      //check the weight is within limits or override is true
+      const check = checkWeightWithinLimit(data);
+      try {
+        if (!check.pass) {
+          throw new Error(check.error);
+        }
+      } catch (error) {
+        handleError(
+          error,
+          400,
+          "/calculate",
+          "Check weight within limit failed",
+          res,
+        );
+        return false;
       }
+
+      //limit decimal age to 2 decimal places after checkWeightWithinLimit
+      data.patientAge = data.patientAge.toFixed(2);
+
+      //perform the calculations and check for errors
+      const calculations = calculateVariables(data);
+      try {
+        if (calculations.errors.length) {
+          throw new Error(calculations.errors.join(", "));
+        }
+      } catch (error) {
+        handleError(
+          error,
+          400,
+          "/calculate",
+          "Failed to perform calculations",
+          res,
+        );
+        return false;
+      }
+
+      //set undefined optional values to null
+      data.pH = data.pH || null;
+      data.glucoseUnit = data.glucoseUnit || null;
+      data.glucose = data.glucose || null;
+      data.glucoseHigh = data.glucoseHigh || false;
+      data.bicarbonate = data.bicarbonate || null;
+      data.bloodKetones = data.bloodKetones || null;
+      data.urineKetones = data.urineKetones || null;
+      data.gcs = data.gcs || null;
+      data.respiratorySupport = data.respiratorySupport || null;
+      data.dropFactor = data.dropFactor || null;
+
+      //generate a new unique auditID
+      const auditID = await generateAuditID();
+
+      //get the IP address of the client request
+      const clientIP = req.ip;
+
+      data.appVersion.api = process.env.version;
+      data.appVersion.apiMode = process.env.NODE_ENV;
+
+      data.serverCalculations = true;
+
+      //encrypt the patient-identifiable fields before database storage
+      const encryptedData = encrypt({
+        patientSex: data.patientSex,
+        weight: data.weight,
+        patientAge: data.patientAge,
+        glucose: data.glucose,
+        glucoseUnit: data.glucoseUnit,
+        glucoseHigh: data.glucoseHigh,
+        bloodKetones: data.bloodKetones,
+        urineKetones: data.urineKetones,
+        diagnosticFeatures: data.diagnosticFeatures,
+        pH: data.pH,
+        bicarbonate: data.bicarbonate,
+        shockPresent: data.shockPresent,
+        gcs: data.gcs,
+        respiratorySupport: data.respiratorySupport,
+        calculations: calculations,
+      });
+
+      //insert the data into the database
+      await insertCalculateData(data, encryptedData, auditID, clientIP);
+
+      //respond to the client with the auditID and the calculations
+      res.json({
+        auditID,
+        calculations,
+      });
     } catch (error) {
       handleError(
         error,
-        400,
-        "/calculate",
-        "Check weight within limit failed",
-        res,
-      );
-      return false;
-    }
-
-    //limit decimal age to 2 decimal places after checkWeightWithinLimit
-    data.patientAge = data.patientAge.toFixed(2);
-
-    //perform the calculations and check for errors
-    const calculations = calculateVariables(data);
-    try {
-      if (calculations.errors.length) {
-        throw new Error(calculations.errors.join(", "));
-      }
-    } catch (error) {
-      handleError(
-        error,
-        400,
+        500,
         "/calculate",
         "Failed to perform calculations",
         res,
+        [
+          "episodeType: " + req.body.episodeType,
+          req.body.centre + " (" + req.body.region + ")",
+          "clientDatetime: " + req.body.clientDatetime,
+          req.ip,
+        ],
       );
-      return false;
     }
-
-    //set undefined optional values to null
-    data.pH = data.pH || null;
-    data.glucoseUnit = data.glucoseUnit || null;
-    data.glucose = data.glucose || null;
-    data.glucoseHigh = data.glucoseHigh || false;
-    data.bicarbonate = data.bicarbonate || null;
-    data.bloodKetones = data.bloodKetones || null;
-    data.urineKetones = data.urineKetones || null;
-    data.gcs = data.gcs || null;
-    data.respiratorySupport = data.respiratorySupport || null;
-    data.dropFactor = data.dropFactor || null;
-
-    //generate a new unique auditID
-    const auditID = await generateAuditID();
-
-    //get the IP address of the client request
-    const clientIP = req.ip;
-
-    data.appVersion.api = process.env.version;
-    data.appVersion.apiMode = process.env.NODE_ENV;
-
-    data.serverCalculations = true;
-
-    //encrypt the patient-identifiable fields before database storage
-    const encryptedData = encrypt({
-      patientSex: data.patientSex,
-      weight: data.weight,
-      patientAge: data.patientAge,
-      glucose: data.glucose,
-      glucoseUnit: data.glucoseUnit,
-      glucoseHigh: data.glucoseHigh,
-      bloodKetones: data.bloodKetones,
-      urineKetones: data.urineKetones,
-      diagnosticFeatures: data.diagnosticFeatures,
-      pH: data.pH,
-      bicarbonate: data.bicarbonate,
-      shockPresent: data.shockPresent,
-      gcs: data.gcs,
-      respiratorySupport: data.respiratorySupport,
-      calculations: calculations,
-    });
-
-    //insert the data into the database
-    await insertCalculateData(data, encryptedData, auditID, clientIP);
-
-    //respond to the client with the auditID and the calculations
-    res.json({
-      auditID,
-      calculations,
-    });
-  } catch (error) {
-    handleError(
-      error,
-      500,
-      "/calculate",
-      "Failed to perform calculations",
-      res,
-      [
-        "episodeType: " + req.body.episodeType,
-        req.body.centre + " (" + req.body.region + ")",
-        "clientDatetime: " + req.body.clientDatetime,
-        req.ip,
-      ],
-    );
-  }
-});
+  },
+);
 
 /**
  * @route POST /sync-offline-data
@@ -408,24 +414,30 @@ app.post(
  * @returns {Object} 200 - `{ message: "Feedback submitted successfully" }`.
  * @returns {Object} 500 - `{ errors: [{ msg: string }] }` if the insert fails.
  */
-app.post("/feedback", feedbackLimiter, feedbackRules, validateRequest, async (req, res) => {
-  try {
-    const { insertFeedback } = require("./modules/insertData");
+app.post(
+  "/feedback",
+  feedbackLimiter,
+  feedbackRules,
+  validateRequest,
+  async (req, res) => {
+    try {
+      const { insertFeedback } = require("./modules/insertData");
 
-    //get the validated data
-    const data = matchedData(req);
+      //get the validated data
+      const data = matchedData(req);
 
-    //insert the feedback into the database
-    await insertFeedback(data.feedbackText, data.auditID);
+      //insert the feedback into the database
+      await insertFeedback(data.feedbackText, data.auditID);
 
-    //respond to the client with success message
-    res.status(200).json({
-      message: "Feedback submitted successfully",
-    });
-  } catch (error) {
-    handleError(error, 500, "/feedback", "Failed to submit feedback", res);
-  }
-});
+      //respond to the client with success message
+      res.status(200).json({
+        message: "Feedback submitted successfully",
+      });
+    } catch (error) {
+      handleError(error, 500, "/feedback", "Failed to submit feedback", res);
+    }
+  },
+);
 
 /**
  * @route GET /decrypt
@@ -436,10 +448,6 @@ app.post("/feedback", feedbackLimiter, feedbackRules, validateRequest, async (re
  * triggers the decryption pipeline in `./modules/decrypt`. Recovered plaintext
  * records are written to `tbl_decrypt`. The route responds immediately once
  * decryption has been initiated; the process runs asynchronously.
- *
- * ⚠️ This route has no authentication. Access should be restricted at the
- * infrastructure layer until application-level authentication is implemented.
- * See review.md — V1.
  *
  * @requires ./modules/decrypt
  *
@@ -461,7 +469,11 @@ app.get("/decrypt", decryptLimiter, async (req, res) => {
 
   // Require the RSA private key — without it decryption is impossible.
   if (!process.env.rsaPrivateKey) {
-    return res.status(503).json({ errors: [{ msg: "Decrypt unavailable: rsaPrivateKey not configured" }] });
+    return res
+      .status(503)
+      .json({
+        errors: [{ msg: "Decrypt unavailable: rsaPrivateKey not configured" }],
+      });
   }
 
   try {
