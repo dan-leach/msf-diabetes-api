@@ -2,7 +2,7 @@
 
 A Node.js / Express REST API that performs clinical calculations for the management of paediatric diabetic ketoacidosis (DKA), based on the 2024 MSF paediatric guidelines. It is the backend counterpart to the [MSF Diabetes Calculator](https://github.com/dan-leach/msf-diabetes) Vue client.
 
-📖 [Documentation wiki](wiki.md)
+📖 [Documentation wiki](https://github.com/dan-leach/msf-diabetes-api/wiki)
 
 ---
 
