@@ -85,11 +85,12 @@ const calculateRules = [
       min: config.validation.patientAge.min,
     })
     .withMessage(
-      `Patient age must be a decimal greater than or equal to ${config.validation.patientAge.min}.`,
+      `Patient age must be an decimal in the range ${config.validation.patientAge.min} to <${config.validation.patientAge.max} years.`,
     )
     .bail()
     .custom((value) => {
-      if (value > config.validation.patientAge.max) {
+      // Not using max in isFloat as need to allow up to max but not including max.
+      if (value >= config.validation.patientAge.max) {
         throw new Error(
           `Patient age must be less than ${config.validation.patientAge.max} years.`,
         );
