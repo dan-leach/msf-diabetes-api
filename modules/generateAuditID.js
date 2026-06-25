@@ -48,9 +48,10 @@ const permittedChars = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 async function generateAuditID() {
   let auditID;
   let isUnique = false;
+  let connection;
   try {
     // Use the select-only database user — this function never needs to write.
-    const connection = await mysql.createConnection({
+    connection = await mysql.createConnection({
       host: "localhost",
       user: config.api.database.users.select,
       password: process.env.app_select_key,

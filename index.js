@@ -158,6 +158,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
         "Check weight within limit failed",
         res,
       );
+      return false;
     }
 
     //limit decimal age to 2 decimal places after checkWeightWithinLimit
@@ -177,6 +178,7 @@ app.post("/calculate", calculateRules, validateRequest, async (req, res) => {
         "Failed to perform calculations",
         res,
       );
+      return false;
     }
 
     //set undefined optional values to null

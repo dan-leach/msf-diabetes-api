@@ -53,8 +53,9 @@ const config = require("../config");
  * @throws {Error} If the connection cannot be established, the INSERT fails, or no rows are affected.
  */
 async function insertCalculateData(data, encryptedData, auditID, clientIP) {
+  let connection;
   try {
-    const connection = await mysql.createConnection({
+    connection = await mysql.createConnection({
       host: "localhost",
       user: config.api.database.users.insert,
       password: process.env.app_insert_key,

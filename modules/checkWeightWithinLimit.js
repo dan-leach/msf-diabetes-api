@@ -72,13 +72,15 @@ function checkWeightWithinLimit(data) {
       weight < limit.lower().toFixed(2) ||
       weight > limit.upper().toFixed(2)
     ) {
-      throw `If weight limit override is not selected, weight must be within 2 standard deviations of the mean for age (upper limit ${
-        config.weightLimits.max
-      }kg) (range ${limit.lower().toFixed(2)}kg to ${limit
-        .upper()
-        .toFixed(2)}kg for ${data.patientSex} patient aged ${Math.floor(
-        data.patientAge
-      )} years and ${ageInMonths - Math.floor(data.patientAge) * 12} months).`;
+      throw new Error(
+        `If weight limit override is not selected, weight must be within 2 standard deviations of the mean for age (upper limit ${
+          config.weightLimits.max
+        }kg) (range ${limit.lower().toFixed(2)}kg to ${limit
+          .upper()
+          .toFixed(2)}kg for ${data.patientSex} patient aged ${Math.floor(
+          data.patientAge
+        )} years and ${ageInMonths - Math.floor(data.patientAge) * 12} months).`,
+      );
     }
     return {
       pass: true,

@@ -6,7 +6,7 @@ Findings from a full review of the codebase. Items are grouped by category and r
 
 ## Bugs
 
-### B1 — Execution continues after error response is sent (HIGH)
+### B1 — Execution continues after error response is sent (HIGH) — fixed
 **File:** `index.js` — `POST /calculate`
 
 The weight-limit check and the calculations check both call `handleError` (which sends an HTTP response) inside a `try/catch` block, but neither block contains a `return` statement. Execution therefore falls through to the next line after the error has already been sent, which will eventually trigger Express's "Cannot set headers after they are sent" fatal error.
@@ -24,21 +24,12 @@ try {
 data.patientAge = data.patientAge.toFixed(2); // ← runs regardless
 ```
 
-**Fix:** Add `return` after each `handleError` call, or restructure so errors propagate to the outer `catch`.
-
 ---
 
-### B2 — Insulin rate working string shows wrong rate for age ≥ 2 (LOW)
+### B2 — Insulin rate working string shows wrong rate for age ≥ 2 (LOW) — fixed
 **File:** `modules/calculateVariables.js` — `calculateInsulinRate()`
 
-The HTML working narrative displays `config.insulin.rateOptions[0]` for both the `< 2 years` and `>= 2 years` bullet points. The `>= 2 years` entry should reference `config.insulin.rateOptions[1]`. The *calculation* uses the correct value; only the displayed explanation is wrong.
-
-```js
-// Both lines currently show rateOptions[0]
-<li>Age <${config.insulin.ageThreshold} years = ${config.insulin.rateOptions[0]} Units/kg/hour</li>
-<li>Age >=${config.insulin.ageThreshold} years = ${config.insulin.rateOptions[0]} Units/kg/hour</li>
-//                                                                             ^ should be [1]
-```
+The HTML working narrative displayed `config.insulin.rateOptions[0]` for both the `< 2 years` and `>= 2 years` bullet points. The `>= 2 years` entry now correctly references `config.insulin.rateOptions[1]`. The *calculation* was always correct; only the displayed explanation was wrong.
 
 ---
 
@@ -54,21 +45,17 @@ const hypoSpeed = { val: highSpeed.val, working: prefix + highSpeed.working };
 
 ---
 
-### B4 — `checkWeightWithinLimit` throws a primitive string, not an `Error` (LOW)
+### B4 — `checkWeightWithinLimit` throws a primitive string, not an `Error` (LOW) — fixed
 **File:** `modules/checkWeightWithinLimit.js`
 
-`` throw `...` `` throws a string literal. The catch block handles it via `.toString()`, so no crash occurs, but stack traces are unavailable and the pattern breaks standard error handling conventions.
-
-**Fix:** Replace with `throw new Error(\`...\`)`.
+`` throw `...` `` threw a string literal. The catch block handled it via `.toString()`, so no crash occurred, but stack traces were unavailable and the pattern broke standard error handling conventions. Replaced with `throw new Error(\`...\`)`.
 
 ---
 
-### B5 — `connection` potentially out of scope in `finally` block (MEDIUM)
+### B5 — `connection` potentially out of scope in `finally` block (MEDIUM) — fixed
 **Files:** `modules/insertData.js`, `modules/generateAuditID.js`
 
-`connection` is declared with `const` inside the `try` block. If `mysql.createConnection()` rejects before the assignment completes, `connection` is not in scope when the `finally` block runs, causing a `ReferenceError`. This is silently swallowed by the nested `try/catch` in `finally`, so no crash surfaces to the caller — but the original connection error may be obscured.
-
-**Fix:** Declare `let connection;` before the `try` block.
+`connection` was declared with `const` inside the `try` block. If `mysql.createConnection()` rejected before the assignment completed, `connection` was not in scope when the `finally` block ran, causing a `ReferenceError` silently swallowed by the nested `try/catch` — which could obscure the original connection error. Fixed by hoisting to `let connection;` before the `try` block in both files.
 
 ---
 
