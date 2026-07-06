@@ -34,18 +34,10 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/config",
+          "raw": "https://api.diabetes.msf.net/config",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "config"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["config"]
         }
       },
       "response": []
@@ -208,7 +200,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -216,18 +208,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -387,7 +371,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": true,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": true,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -395,18 +379,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -566,7 +542,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 12,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 12,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -574,18 +550,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -745,7 +713,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": true,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": true,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -753,18 +721,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -797,7 +757,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": false,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": false,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -805,18 +765,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -849,7 +801,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 155,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 155,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -857,18 +809,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -901,7 +845,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 1,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 1,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -909,18 +853,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -953,7 +889,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 40,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 40,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -961,18 +897,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1135,7 +1063,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 40,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": true,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 40,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": true,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1143,18 +1071,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1187,7 +1107,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 19.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 19.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1195,18 +1115,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1239,7 +1151,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 190,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 190,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1247,18 +1159,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1291,7 +1195,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 10,\r\n    \"glucoseUnit\": \"mmol/L\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 10,\r\n    \"glucoseUnit\": \"mmol/L\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1299,18 +1203,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1343,7 +1239,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 1,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 1,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1351,18 +1247,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1395,7 +1283,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 2,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 2,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1403,18 +1291,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1447,7 +1327,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": false,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": false,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 15,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1455,18 +1335,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1629,7 +1501,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 5,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 0.252027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 5,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 0.252027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1637,18 +1509,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1811,7 +1675,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 17.252027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 15.252027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1819,18 +1683,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -1993,7 +1849,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 90,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": true,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 17.252027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 90,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": true,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 15.252027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -2001,18 +1857,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -2045,7 +1893,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 17.252027276060284,\r\n    \"bloodGasAvailable\": true,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 3,\r\n    \"pH\": 7.5,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 15.252027276060284,\r\n    \"bloodGasAvailable\": true,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 3,\r\n    \"pH\": 7.5,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -2053,18 +1901,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -2227,7 +2067,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 17.252027276060284,\r\n    \"bloodGasAvailable\": true,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 3,\r\n    \"pH\": 7.28,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 15.252027276060284,\r\n    \"bloodGasAvailable\": true,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 3,\r\n    \"pH\": 7.28,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -2235,18 +2075,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -2406,7 +2238,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 17.252027276060284,\r\n    \"bloodGasAvailable\": true,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 3,\r\n    \"pH\": 7.05,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 15.252027276060284,\r\n    \"bloodGasAvailable\": true,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 3,\r\n    \"pH\": 7.05,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -2414,18 +2246,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -2458,7 +2282,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 17.252027276060284,\r\n    \"bloodGasAvailable\": true,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 3,\r\n    \"pH\": 5.9,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 70,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 17.252027276060284,\r\n    \"bloodGasAvailable\": true,\r\n    \"bloodKetonesAvailable\": true,\r\n    \"syringePumpAvailable\": true,\r\n    \"infusionPumpAvailable\": true,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"bloodKetones\": 3,\r\n    \"pH\": 5.9,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -2466,18 +2290,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
@@ -2640,7 +2456,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": false,\r\n    \"infusionPumpAvailable\": false,\r\n    \"dropFactor\": 20,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    }\r\n}",
+          "raw": "{\r\n    \"legalAgreement\": true,\r\n    \"episodeType\": \"test\",\r\n    \"patientSex\": \"male\",\r\n    \"weight\": 20,\r\n    \"operationalCentre\": \"Paris\",\r\n    \"project\": \"OCP-12345-ProjectName\",\r\n    \"weightLimitOverride\": false,\r\n    \"use2SD\": false,\r\n    \"patientAge\": 6.852027276060284,\r\n    \"bloodGasAvailable\": false,\r\n    \"bloodKetonesAvailable\": false,\r\n    \"syringePumpAvailable\": false,\r\n    \"infusionPumpAvailable\": false,\r\n    \"dropFactor\": 20,\r\n    \"glucose\": 250,\r\n    \"glucoseUnit\": \"mg/dL\",\r\n    \"urineKetones\": 3,\r\n    \"diagnosticFeatures\": true,\r\n    \"shockPresent\": false,\r\n    \"gcs\": 14,\r\n    \"respiratorySupport\": false,\r\n    \"clientUseragent\": \"Postman\",\r\n    \"appVersion\": {\r\n        \"client\": \"Postman\",\r\n        \"clientMode\": \"Postman\"\r\n    },\r\n    \"useYearsMonths\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -2648,18 +2464,10 @@
           }
         },
         "url": {
-          "raw": "https://api.msf.dka-calculator.co.uk/calculate",
+          "raw": "https://api.diabetes.msf.net/calculate",
           "protocol": "https",
-          "host": [
-            "api",
-            "msf",
-            "dka-calculator",
-            "co",
-            "uk"
-          ],
-          "path": [
-            "calculate"
-          ]
+          "host": ["api", "diabetes", "msf", "net"],
+          "path": ["calculate"]
         }
       },
       "response": []
