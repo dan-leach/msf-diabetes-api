@@ -1,6 +1,5 @@
 {
   "appName": "MSF Diabetes Calculator",
-  "underDevelopment": true,
   "author": {
     "name": "Dan Leach",
     "url": "https://danleach.uk",
@@ -24,28 +23,24 @@
       "main": "https://github.com/dan-leach/msf-diabetes-api",
       "changelog": "https://github.com/dan-leach/msf-diabetes-api/wiki/Changelog"
     },
-    "url": "https://api.msf.dka-calculator.co.uk/",
+    "url": "https://api.diabetes.msf.net/",
     "timeoutDuration": 15000,
+    "payloadLimit": "100kb",
     "showConsole": true,
     "database": {
       "name": "msfdiabetes_data_v0",
-      "users": {
-        "select": "msfdiabetes_app_select",
-        "insert": "msfdiabetes_app_insert"
-      },
       "tables": {
         "calculate": "tbl_calculate",
-        "decrypt": "tbl_decrypt"
+        "decrypt": "tbl_decrypt",
+        "feedback": "tbl_feedback"
       }
     }
   },
   "client": {
-    "url": "https://msf.dka-calculator.co.uk",
-    "sodiumOsmoUrl": "https://msf.dka-calculator.co.uk/sodium-osmo",
+    "url": "https://diabetes.msf.net",
     "repo": {
       "main": "https://github.com/dan-leach/msf-diabetes",
-      "changelog": "https://github.com/dan-leach/msf-diabetes/wiki/Changelog",
-      "icpChangelog": "https://github.com/dan-leach/msf-diabetes/wiki/Integrated-Care-Pathway-(ICP)-Changelog"
+      "changelog": "https://github.com/dan-leach/msf-diabetes/wiki/Changelog"
     }
   },
   "validation": {
@@ -61,8 +56,18 @@
     },
     "patientAge": {
       "min": 0,
-      "max": 19.01
+      "max": 16
     },
+    "dropFactor": [
+      {
+        "type": "paediatric infusion set",
+        "drops": 60
+      },
+      {
+        "type": "adult infusion set",
+        "drops": 20
+      }
+    ],
     "glucose": {
       "units": {
         "mg/dL": {
@@ -133,14 +138,28 @@
   "bolus": {
     "mlsPerKg": 10,
     "duration": {
-      "shock": 0.25,
-      "noShock": 1
+      "shock": 15,
+      "noShock": 60
     }
   },
   "insulin": {
     "ageThreshold": 2,
     "rateOptions": [0.05, 0.1],
     "doseOptions": [0.1, 0.2]
+  },
+  "decimals": {
+    "bolusVolume": 0,
+    "bolusRate": 0,
+    "weight": 1,
+    "deficitVolume": 1,
+    "deficitRate": 1,
+    "maintenanceVolume": 1,
+    "maintenanceRate": 1,
+    "bagSpeed": 0,
+    "ivInsulinRate": 2,
+    "age": 1,
+    "imInsulinDose": 1,
+    "drops": 0
   },
   "deficitReplacementDuration": 48,
   "bagSpeedGlucoseThresholds": {
@@ -150,27 +169,27 @@
   "operationalCentres": [
     {
       "name": "Paris",
-      "projects": ["OCP-12345-ProjectName", "OCP-67890-AnotherProject"]
+      "projects": ["OCP - SS153 - Aweil"]
     },
     {
       "name": "Amsterdam",
-      "projects": ["OCA-12345-ProjectName", "OCA-67890-AnotherProject"]
+      "projects": []
     },
     {
       "name": "Geneva",
-      "projects": ["OCG-12345-ProjectName", "OCG-67890-AnotherProject"]
+      "projects": []
     },
     {
       "name": "Barcelona-Athens",
-      "projects": ["OCBA-12345-ProjectName", "OCBA-67890-AnotherProject"]
+      "projects": []
     },
     {
       "name": "Brussels",
-      "projects": ["OCB-12345-ProjectName", "OCB-67890-AnotherProject"]
+      "projects": []
     },
     {
       "name": "West and Central Africa",
-      "projects": ["WACA-12345-ProjectName", "WACA-67890-AnotherProject"]
+      "projects": []
     }
   ],
   "weightLimits": {

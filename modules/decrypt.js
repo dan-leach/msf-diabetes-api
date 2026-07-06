@@ -73,16 +73,20 @@ function decryptData(encryptedAESKey, encryptedData, iv, authTag) {
 async function decryptTable(decryptID) {
   const connection = await mysql.createConnection({
     host: "localhost",
-    user: process.env.selectUser,
-    password: process.env.selectKey,
-    database: "dkacalcu_dka_database",
+    user: process.env.app_insert_user,
+    password: process.env.app_insert_key,
+    database: config.api.database.name,
   });
 
-  // Fetch encrypted rows
+  // Columns mirror the MSF `tbl_calculate` schema (see insertData.js).
+  const columns =
+    "id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, encryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor";
+
+  // Fetch encrypted rows — a single record by audit ID, or all records.
   const query =
     decryptID === "all"
-      ? `SELECT id, episodeType, auditID, appVersion, patientHash, legalAgreement, region, centre, clientDatetime, serverDatetime, clientUseragent, clientIP, encryptedData FROM ${config.api.tables.calculate}`
-      : `SELECT id, episodeType, auditID, appVersion, patientHash, legalAgreement, region, centre, clientDatetime, serverDatetime, clientUseragent, clientIP, encryptedData FROM ${config.api.tables.calculate} WHERE auditID = ?`;
+      ? `SELECT ${columns} FROM ${config.api.database.tables.calculate}`
+      : `SELECT ${columns} FROM ${config.api.database.tables.calculate} WHERE auditID = ?`;
 
   const [rows] = await connection.execute(
     query,
@@ -92,18 +96,26 @@ async function decryptTable(decryptID) {
   for (const row of rows) {
     const {
       id,
-      episodeType,
       auditID,
+      episodeType,
+      serverCalculations,
+      offlineTimestamp,
       appVersion,
-      patientHash,
       legalAgreement,
-      region,
-      centre,
-      clientDatetime,
+      operationalCentre,
+      project,
       serverDatetime,
       clientUseragent,
       clientIP,
       encryptedData,
+      weightLimitOverride,
+      use2SD,
+      useYearsMonths,
+      bloodGasAvailable,
+      bloodKetonesAvailable,
+      syringePumpAvailable,
+      infusionPumpAvailable,
+      dropFactor,
     } = row;
 
     if (!encryptedData) {
@@ -125,30 +137,38 @@ async function decryptTable(decryptID) {
     const { encryptedKey, encryptedData: encData, iv, authTag } = parsedData;
 
     // Decrypt the data
-    const decryptedObject = decryptData(encryptedKey, encData, iv, authTag);
+    const decryptedData = decryptData(encryptedKey, encData, iv, authTag);
 
-    if (!decryptedObject) {
+    if (!decryptedData) {
       console.error(`Skipping row ID ${id}: Decryption failed.`);
       continue;
     }
 
     // Insert decrypted data into tbl_decrypt
     await connection.execute(
-      `INSERT INTO ${config.api.tables.decrypt} (id, episodeType, auditID, appVersion, patientHash, legalAgreement, region, centre, clientDatetime, serverDatetime, clientUseragent, clientIP, decryptedData) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO ${config.api.database.tables.decrypt} (id, auditID, episodeType, serverCalculations, offlineTimestamp, appVersion, legalAgreement, operationalCentre, project, serverDatetime, clientUseragent, clientIP, decryptedData, weightLimitOverride, use2SD, useYearsMonths, bloodGasAvailable, bloodKetonesAvailable, syringePumpAvailable, infusionPumpAvailable, dropFactor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        episodeType,
         auditID,
+        episodeType,
+        serverCalculations,
+        offlineTimestamp,
         appVersion,
-        patientHash,
         legalAgreement,
-        region,
-        centre,
-        clientDatetime,
+        operationalCentre,
+        project,
         serverDatetime,
         clientUseragent,
         clientIP,
-        decryptedObject,
+        decryptedData,
+        weightLimitOverride,
+        use2SD,
+        useYearsMonths,
+        bloodGasAvailable,
+        bloodKetonesAvailable,
+        syringePumpAvailable,
+        infusionPumpAvailable,
+        dropFactor,
       ]
     );
 

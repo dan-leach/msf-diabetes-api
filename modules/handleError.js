@@ -1,6 +1,6 @@
 /**
  * @module handleError
- * @memberof module:dka-calculator-api
+ * @memberof module:msf-diabetes-api
  * @summary Module for handling errors.
  *
  * @exports handleError Object containing the different routes available in the feedback module
@@ -32,7 +32,7 @@ function handleError(
   route = "undefinedRoute",
   routeMsg = "API failed at unknown route",
   res,
-  info = []
+  info = [],
 ) {
   // Log the error with a timestamp for debugging
   delete error.statusCode;
@@ -51,7 +51,7 @@ function handleError(
 
   // Send email alert if unexpected error
   if (statusCode === 500) {
-    html = `
+    const html = `
           <p>route: ${route}<br>
           errorMessage: ${error.message}<br>
           errorTime: ${errorTime}<br>
@@ -60,11 +60,11 @@ function handleError(
         `;
     sendMail(
       config.author.email,
-      "DKA Calculator status 500 error report",
-      html
+      "MSF Diabetes API status 500 error report",
+      html,
     );
   }
-  
+
   console.error(" ");
 }
 
@@ -81,8 +81,8 @@ function handleError(
  */
 const sendMail = async (email, subject, html) => {
   const config = require("../config.json");
-  if (config.underDevelopment) {
-    console.error("Dev mode active: error email notifications disabled");
+  if (process.env.NODE_ENV === "development") {
+    console.error("Api dev mode active: error email notifications disabled");
     return false;
   }
 
@@ -90,22 +90,18 @@ const sendMail = async (email, subject, html) => {
 
   // Configure the email transporter using Nodemailer
   const transporter = nodemailer.createTransport({
-    host: "mail.dka-calculator.co.uk",
+    host: "mail.danleach.uk",
     port: 465,
     secure: true, // true for port 465, false for other ports
     auth: {
       user: config.author.email,
       pass: process.env.emailKey,
     },
-    dkim: {
-      domainName: "dka-calculator.co.uk",
-      privateKey: process.env.emailDkimPrivateKey,
-    },
   });
 
   // Email options including the recipient, subject, HTML content, and attachments
   const mailOptions = {
-    from: "admin@dka-calculator.co.uk",
+    from: "web@danleach.uk",
     to: email,
     subject: subject,
     html: html,
