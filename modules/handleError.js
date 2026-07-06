@@ -97,10 +97,6 @@ const sendMail = async (email, subject, html) => {
       user: config.author.email,
       pass: process.env.emailKey,
     },
-    dkim: {
-      domainName: "danleach.uk",
-      privateKey: process.env.emailDkimPrivateKey,
-    },
   });
 
   // Email options including the recipient, subject, HTML content, and attachments
