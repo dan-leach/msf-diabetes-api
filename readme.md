@@ -8,15 +8,15 @@ A Node.js / Express REST API that performs clinical calculations for the managem
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js 20 |
-| Framework | Express 4 |
-| Validation | express-validator 7 |
-| Rate limiting | express-rate-limit |
-| Encryption | Node.js `crypto` (AES-256-GCM + RSA-OAEP) |
-| Database | MySQL 2 (`mysql2/promise`) |
-| Email | Nodemailer 6 |
+| Layer         | Technology                                |
+| ------------- | ----------------------------------------- |
+| Runtime       | Node.js 20                                |
+| Framework     | Express 4                                 |
+| Validation    | express-validator 7                       |
+| Rate limiting | express-rate-limit                        |
+| Encryption    | Node.js `crypto` (AES-256-GCM + RSA-OAEP) |
+| Database      | MySQL 2 (`mysql2/promise`)                |
+| Email         | Nodemailer 6                              |
 
 ---
 
@@ -28,24 +28,24 @@ npm install
 
 The following environment variables must be set before the server starts:
 
-| Variable | Description |
-|---|---|
-| `rsaPublicKey` | Base64-encoded RSA public key (PEM) — used to encrypt patient data before storage |
-| `app_insert_key` | MySQL password for the insert-only database user |
-| `app_select_key` | MySQL password for the select-only database user |
+| Variable         | Description                                                                       |
+| ---------------- | --------------------------------------------------------------------------------- |
+| `rsaPublicKey`   | Base64-encoded RSA public key (PEM) — used to encrypt patient data before storage |
+| `app_insert_key` | MySQL password for the insert-only database user                                  |
+| `app_select_key` | MySQL password for the select-only database user                                  |
 
 Optional variables:
 
-| Variable | Description |
-|---|---|
-| `rsaPrivateKey` | Base64-encoded RSA private key (PEM) — required only for the `/decrypt` route; if unset, `/decrypt` returns `503` |
-| `apiVersion` | Reported in `/config` response and stamped on each episode record |
-| `clientVersion` | Reported in `/config` response |
-| `lastUpdated` | Reported in `/config` response |
-| `emailKey` | SMTP password — required for error notification emails (production only) |
-| `emailDkimPrivateKey` | DKIM private key for outbound email signing (production only) |
-| `decryptSecret` | Shared secret for the `/decrypt` route — must be sent as `X-Decrypt-Key` header; if unset, the route returns `401` |
-| `PORT` | Listening port (default: `3000`) |
+| Variable              | Description                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `rsaPrivateKey`       | Base64-encoded RSA private key (PEM) — required only for the `/decrypt` route; if unset, `/decrypt` returns `503`  |
+| `apiVersion`          | Reported in `/config` response and stamped on each episode record                                                  |
+| `clientVersion`       | Reported in `/config` response                                                                                     |
+| `lastUpdated`         | Reported in `/config` response                                                                                     |
+| `emailKey`            | SMTP password — required for error notification emails (production only)                                           |
+| `emailDkimPrivateKey` | DKIM private key for outbound email signing (production only)                                                      |
+| `decryptSecret`       | Shared secret for the `/decrypt` route — must be sent as `X-Decrypt-Key` header; if unset, the route returns `401` |
+| `PORT`                | Listening port (default: `3000`)                                                                                   |
 
 Start the server:
 
@@ -87,13 +87,13 @@ Returns a brief HTML redirect message pointing users to the client application U
 
 All limits are per IP address, with a one-hour sliding window. Responses include standard `RateLimit-*` headers so clients can inspect their remaining allowance.
 
-| Route | Limit / hour | Reasoning |
-|---|---|---|
-| `GET /config` | 200 | Fetched on startup, SW revalidation, and `/privacy-policy` navigation |
-| `POST /calculate` | 60 | RSA + DB write per call; 60/hr ≈ 14× the expected daily maximum |
-| `POST /sync-offline-data` | 60 | Same cost profile as `/calculate` |
-| `POST /feedback` | 20 | Naturally infrequent |
-| `GET /decrypt` | 60 | Admin only |
+| Route                     | Limit / hour | Reasoning                                                             |
+| ------------------------- | ------------ | --------------------------------------------------------------------- |
+| `GET /config`             | 200          | Fetched on startup, SW revalidation, and `/privacy-policy` navigation |
+| `POST /calculate`         | 60           | RSA + DB write per call; 60/hr ≈ 14× the expected daily maximum       |
+| `POST /sync-offline-data` | 60           | Same cost profile as `/calculate`                                     |
+| `POST /feedback`          | 20           | Naturally infrequent                                                  |
+| `GET /decrypt`            | 60           | Admin only                                                            |
 
 ---
 
@@ -121,35 +121,35 @@ The primary endpoint. Validates the request, performs all DKA calculations, encr
 
 **Request body fields:**
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `legalAgreement` | boolean | ✓ | Must be `true` |
-| `episodeType` | string | ✓ | `"real"` or `"test"` |
-| `patientSex` | string | ✓ | `"male"` or `"female"` |
-| `weight` | number | ✓ | kg, 2–150 |
-| `patientAge` | number | ✓ | Decimal years, 0–19.01 |
-| `useYearsMonths` | boolean | ✓ | Whether age was entered as years + months |
-| `operationalCentre` | string | ✓ | MSF operational centre name |
-| `project` | string | ✓ | MSF project code |
-| `weightLimitOverride` | boolean | ✓ | Allow weight outside 2SD centile range |
-| `use2SD` | boolean | ✓ | Whether 2SD lookup was used |
-| `bloodGasAvailable` | boolean | ✓ | |
-| `bloodKetonesAvailable` | boolean | ✓ | |
-| `syringePumpAvailable` | boolean | ✓ | |
-| `infusionPumpAvailable` | boolean | ✓ | |
-| `dropFactor` | number | If no infusion pump | Drops/mL of giving set |
-| `glucoseUnit` | string | ✓ | `"mg/dL"` or `"mmol/L"` |
-| `glucose` | number | ✓ | Within unit-specific range |
-| `bloodKetones` | number | If no urine ketones | mmol/L, ≥ 3 |
-| `urineKetones` | number | If no blood ketones | Integer 2–4 |
-| `diagnosticFeatures` | boolean | ✓ | Must be `true` |
-| `pH` | number | Optional | 6.0–7.5 |
-| `bicarbonate` | number | Optional | 0–30 mmol/L |
-| `shockPresent` | boolean | ✓ | |
-| `gcs` | number | If not shocked | 3–15 |
-| `respiratorySupport` | boolean | Conditional | Required if not shocked and GCS ≥ 12 |
-| `appVersion` | object | ✓ | `{ client: "x.x.x", api: "x.x.x" }` |
-| `clientUseragent` | string | ✓ | Browser user-agent string |
+| Field                   | Type    | Required            | Notes                                     |
+| ----------------------- | ------- | ------------------- | ----------------------------------------- |
+| `legalAgreement`        | boolean | ✓                   | Must be `true`                            |
+| `episodeType`           | string  | ✓                   | `"real"` or `"test"`                      |
+| `patientSex`            | string  | ✓                   | `"male"` or `"female"`                    |
+| `weight`                | number  | ✓                   | kg, 2–150                                 |
+| `patientAge`            | number  | ✓                   | Decimal years, 0–19.01                    |
+| `useYearsMonths`        | boolean | ✓                   | Whether age was entered as years + months |
+| `operationalCentre`     | string  | ✓                   | MSF operational centre name               |
+| `project`               | string  | ✓                   | MSF project code                          |
+| `weightLimitOverride`   | boolean | ✓                   | Allow weight outside 2SD centile range    |
+| `use2SD`                | boolean | ✓                   | Whether 2SD lookup was used               |
+| `bloodGasAvailable`     | boolean | ✓                   |                                           |
+| `bloodKetonesAvailable` | boolean | ✓                   |                                           |
+| `syringePumpAvailable`  | boolean | ✓                   |                                           |
+| `infusionPumpAvailable` | boolean | ✓                   |                                           |
+| `dropFactor`            | number  | If no infusion pump | Drops/mL of giving set                    |
+| `glucoseUnit`           | string  | ✓                   | `"mg/dL"` or `"mmol/L"`                   |
+| `glucose`               | number  | ✓                   | Within unit-specific range                |
+| `bloodKetones`          | number  | If no urine ketones | mmol/L, ≥ 3                               |
+| `urineKetones`          | number  | If no blood ketones | Integer 2–4                               |
+| `diagnosticFeatures`    | boolean | ✓                   | Must be `true`                            |
+| `pH`                    | number  | Optional            | 6.0–7.5                                   |
+| `bicarbonate`           | number  | Optional            | 0–30 mmol/L                               |
+| `shockPresent`          | boolean | ✓                   |                                           |
+| `gcs`                   | number  | If not shocked      | 3–15                                      |
+| `respiratorySupport`    | boolean | Conditional         | Required if not shocked and GCS ≥ 12      |
+| `appVersion`            | object  | ✓                   | `{ client: "x.x.x", api: "x.x.x" }`       |
+| `clientUseragent`       | string  | ✓                   | Browser user-agent string                 |
 
 **Success response — `200`:**
 
@@ -158,10 +158,20 @@ The primary endpoint. Validates the request, performs all DKA calculations, encr
   "auditID": "ABC123",
   "calculations": {
     "severity": { "val": "standard", "working": "<html narrative>" },
-    "bolus":    { "volume": {}, "duration": {}, "rate": {}, "drops": null },
-    "deficit":  { "percentage": {}, "standardSpeedVolume": {}, "standardSpeedRate": {}, "highSpeedVolume": {}, "highSpeedRate": {} },
+    "bolus": { "volume": {}, "duration": {}, "rate": {}, "drops": null },
+    "deficit": {
+      "percentage": {},
+      "standardSpeedVolume": {},
+      "standardSpeedRate": {},
+      "highSpeedVolume": {},
+      "highSpeedRate": {}
+    },
     "maintenance": { "volume": {}, "rate": {} },
-    "bagSpeeds":   { "standardSpeed": {}, "halfStandardSpeed": {}, "hypoSpeed": {} },
+    "bagSpeeds": {
+      "standardSpeed": {},
+      "halfStandardSpeed": {},
+      "hypoSpeed": {}
+    },
     "insulinRate": { "val": 3.0, "working": "<html narrative>" },
     "insulinDose": { "val": 6.0, "working": "<html narrative>" },
     "errors": []
@@ -189,11 +199,11 @@ Each object within `calculations` contains a `val` (the numeric result) and a `w
 
 Accepts an episode that was calculated offline by the client and persists it to the database. The episode retains its client-generated audit ID; `serverCalculations` is recorded as `false` to distinguish these records from server-calculated episodes.
 
-| Body field | Type | Notes |
-|---|---|---|
-| `auditID` | string | Client-generated audit ID for the episode |
-| `data` | object | Full episode data object as submitted by the client |
-| `encryptedData` | object | Client-encrypted patient data object |
+| Body field      | Type   | Notes                                               |
+| --------------- | ------ | --------------------------------------------------- |
+| `auditID`       | string | Client-generated audit ID for the episode           |
+| `data`          | object | Full episode data object as submitted by the client |
+| `encryptedData` | object | Client-encrypted patient data object                |
 
 **Success response — `200`:** `{ "message": "Offline data synced successfully" }`
 
@@ -203,9 +213,9 @@ Accepts an episode that was calculated offline by the client and persists it to 
 
 Stores free-text clinician feedback linked to an episode audit ID.
 
-| Body field | Type | Notes |
-|---|---|---|
-| `auditID` | string | Audit ID of the associated episode |
+| Body field     | Type   | Notes                                             |
+| -------------- | ------ | ------------------------------------------------- |
+| `auditID`      | string | Audit ID of the associated episode                |
 | `feedbackText` | string | Free-text feedback (escaped by express-validator) |
 
 **Success response — `200`:** `{ "message": "Feedback submitted successfully" }`
@@ -216,9 +226,9 @@ Stores free-text clinician feedback linked to an episode audit ID.
 
 Triggers decryption of one or all stored patient records and writes the plaintext results to `tbl_decrypt`.
 
-| Query parameter | Value |
-|---|---|
-| `decryptID` | An auditID string, or `"all"` to process every record |
+| Query parameter | Value                                                 |
+| --------------- | ----------------------------------------------------- |
+| `decryptID`     | An auditID string, or `"all"` to process every record |
 
 **Authentication:** Requires the `X-Decrypt-Key` request header to match the `decryptSecret` environment variable. Requests with a missing or incorrect header receive `401 Unauthorised`. If `decryptSecret` is not set on the server, the route is effectively disabled.
 
@@ -228,19 +238,19 @@ Triggers decryption of one or all stored patient records and writes the plaintex
 
 The config file is the single source of truth for all clinical constants. Key sections:
 
-| Section | Purpose |
-|---|---|
-| `validation` | Input ranges for weight, age, glucose, pH, bicarbonate, GCS, ketones |
-| `severity` | pH / bicarbonate thresholds and deficit percentages for standard vs severe DKA |
-| `caps` | Maximum values for bolus, deficit, maintenance, and insulin calculations |
-| `bolus` | mL/kg dose and duration (shocked vs not shocked) |
-| `insulin` | Age threshold and rate/dose options for IV and IM insulin |
-| `deficitReplacementDuration` | Hours over which deficit is replaced (48) |
-| `bagSpeedGlucoseThresholds` | Glucose thresholds for bag-speed transitions (per unit) |
-| `weightLimits` | Per-sex 2SD centile arrays indexed by age in months (228 entries each) |
-| `operationalCentres` | Allowed MSF operational centres and their project codes |
-| `api.database` | Database name, table names, and user names |
-| `decimals` | Decimal places for each output field |
+| Section                      | Purpose                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------ |
+| `validation`                 | Input ranges for weight, age, glucose, pH, bicarbonate, GCS, ketones           |
+| `severity`                   | pH / bicarbonate thresholds and deficit percentages for standard vs severe DKA |
+| `caps`                       | Maximum values for bolus, deficit, maintenance, and insulin calculations       |
+| `bolus`                      | mL/kg dose and duration (shocked vs not shocked)                               |
+| `insulin`                    | Age threshold and rate/dose options for IV and IM insulin                      |
+| `deficitReplacementDuration` | Hours over which deficit is replaced (48)                                      |
+| `bagSpeedGlucoseThresholds`  | Glucose thresholds for bag-speed transitions (per unit)                        |
+| `weightLimits`               | Per-sex 2SD centile arrays indexed by age in months (228 entries each)         |
+| `operationalCentres`         | Allowed MSF operational centres and their project codes                        |
+| `api.database`               | Database name, table names, and user names                                     |
+| `decimals`                   | Decimal places for each output field                                           |
 
 ---
 
@@ -261,36 +271,36 @@ Decryption reverses the process using the RSA private key, accessed only via the
 
 The API targets MySQL. Two database users with least-privilege access are used:
 
-| User | Permission | Used by |
-|---|---|---|
+| User                     | Permission                | Used by              |
+| ------------------------ | ------------------------- | -------------------- |
 | `msfdiabetes_app_select` | SELECT on `tbl_calculate` | `generateAuditID.js` |
-| `msfdiabetes_app_insert` | INSERT on `tbl_calculate` | `insertData.js` |
+| `msfdiabetes_app_insert` | INSERT on `tbl_calculate` | `insertData.js`      |
 
 ### `tbl_calculate` columns
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | INT AUTO_INCREMENT | |
-| `auditID` | VARCHAR | 6-character unique identifier |
-| `episodeType` | VARCHAR | `"real"` or `"test"` |
-| `appVersion` | JSON | Client and API version at time of submission |
-| `serverCalculations` | BOOL | Always `true` for server-side episodes |
-| `legalAgreement` | BOOL | |
-| `operationalCentre` | VARCHAR | |
-| `project` | VARCHAR | |
-| `clientUseragent` | VARCHAR | |
-| `clientIP` | VARCHAR | |
-| `encryptedData` | TEXT | JSON blob — see Encryption model |
-| `weightLimitOverride` | BOOL | |
-| `use2SD` | BOOL | |
-| `useYearsMonths` | BOOL | Whether age was entered as years + months |
-| `bloodGasAvailable` | BOOL | |
-| `bloodKetonesAvailable` | BOOL | |
-| `syringePumpAvailable` | BOOL | |
-| `infusionPumpAvailable` | BOOL | |
-| `dropFactor` | INT | Drops/mL of giving set (when no infusion pump) |
-| `offlineTimestamp` | DATETIME | Client timestamp for synced offline episodes; null otherwise |
-| `serverDatetime` | DATETIME | Set by MySQL `DEFAULT CURRENT_TIMESTAMP` |
+| Column                  | Type               | Notes                                                        |
+| ----------------------- | ------------------ | ------------------------------------------------------------ |
+| `id`                    | INT AUTO_INCREMENT |                                                              |
+| `auditID`               | VARCHAR            | 6-character unique identifier                                |
+| `episodeType`           | VARCHAR            | `"real"` or `"test"`                                         |
+| `appVersion`            | JSON               | Client and API version at time of submission                 |
+| `serverCalculations`    | BOOL               | Always `true` for server-side episodes                       |
+| `legalAgreement`        | BOOL               |                                                              |
+| `operationalCentre`     | VARCHAR            |                                                              |
+| `project`               | VARCHAR            |                                                              |
+| `clientUseragent`       | VARCHAR            |                                                              |
+| `clientIP`              | VARCHAR            |                                                              |
+| `encryptedData`         | TEXT               | JSON blob — see Encryption model                             |
+| `weightLimitOverride`   | BOOL               |                                                              |
+| `use2SD`                | BOOL               |                                                              |
+| `useYearsMonths`        | BOOL               | Whether age was entered as years + months                    |
+| `bloodGasAvailable`     | BOOL               |                                                              |
+| `bloodKetonesAvailable` | BOOL               |                                                              |
+| `syringePumpAvailable`  | BOOL               |                                                              |
+| `infusionPumpAvailable` | BOOL               |                                                              |
+| `dropFactor`            | INT                | Drops/mL of giving set (when no infusion pump)               |
+| `offlineTimestamp`      | DATETIME           | Client timestamp for synced offline episodes; null otherwise |
+| `serverDatetime`        | DATETIME           | Set by MySQL `DEFAULT CURRENT_TIMESTAMP`                     |
 
 ---
 

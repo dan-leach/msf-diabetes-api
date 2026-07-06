@@ -230,7 +230,7 @@ const calculateRules = [
 
   check("shockPresent")
     .isBoolean()
-    .withMessage("Clinical shock status field must be data type [boolean]."),
+    .withMessage("Blood gas availability field must be data type [boolean]."),
 
   // GCS is optional when shock is present (clinical severity then drives the protocol).
   check("gcs")
