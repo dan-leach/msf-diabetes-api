@@ -25,6 +25,7 @@
     },
     "url": "https://api.diabetes.msf.net/",
     "timeoutDuration": 15000,
+    "payloadLimit": "100kb",
     "showConsole": true,
     "database": {
       "name": "msfdiabetes_data_v0",

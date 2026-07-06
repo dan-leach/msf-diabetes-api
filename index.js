@@ -57,7 +57,7 @@ const { handleError } = require("./modules/handleError");
 
 const app = express();
 app.use(cors({ origin: config.client.url }));
-app.use(bodyParser.json({ limit: "10kb" }));
+app.use(bodyParser.json({ limit: config.api.payloadLimit }));
 
 /**
  * Rate limiter for GET /config.
@@ -73,14 +73,27 @@ const configLimiter = rateLimit({
 });
 
 /**
- * Rate limiter for POST /calculate and POST /sync-offline-data.
- * Each call triggers RSA encryption and a database write, making these the most
- * expensive endpoints to abuse. 60/hour = 1,440/day, roughly 14× the expected
+ * Rate limiter for POST /calculate.
+ * Each call triggers RSA encryption and a database write, making this the most
+ * expensive endpoint to abuse. 60/hour = 1,440/day, roughly 14× the expected
  * peak of ~100 real episodes per day per IP.
  */
 const calculateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { errors: [{ msg: "Too many requests, please try again later." }] },
+});
+
+/**
+ * Rate limiter for POST /sync-offline-data.
+ * Need to allow greater number vs calculateLimiter because a single user may
+ * have multiple offline episodes to sync.
+ */
+const syncOfflineDataLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { errors: [{ msg: "Too many requests, please try again later." }] },
@@ -351,7 +364,7 @@ app.post(
  */
 app.post(
   "/sync-offline-data",
-  calculateLimiter,
+  syncOfflineDataLimiter,
   syncOfflineDataRules,
   validateRequest,
   async (req, res) => {
