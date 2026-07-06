@@ -1,6 +1,6 @@
 /**
  * @module generateAuditID
- * @memberof module:dka-calculator-api
+ * @memberof module:msf-diabetes-api
  * @summary Generates a unique 6-character audit ID for each DKA episode.
  *
  * @description
@@ -63,7 +63,7 @@ async function generateAuditID() {
       // Check whether this candidate ID already exists in the episode table.
       const [rows] = await connection.execute(
         `SELECT auditID FROM ${config.api.database.tables.calculate} WHERE auditID = ?`,
-        [auditID]
+        [auditID],
       );
 
       if (rows.length === 0) {
@@ -72,7 +72,7 @@ async function generateAuditID() {
     }
   } catch (error) {
     throw new Error(
-      `Unable to generate audit ID: ${error.message}${error.code}`
+      `Unable to generate audit ID: ${error.message}${error.code}`,
     );
   } finally {
     try {

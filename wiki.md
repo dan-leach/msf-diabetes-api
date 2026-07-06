@@ -22,33 +22,34 @@ Clinical decision-making remains entirely the responsibility of the treating cli
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  Client (browser / PWA)              │
-│           Vue 3 — msf.dka-calculator.co.uk          │
+│                  Client (browser / PWA)             │
+│                 Vue 3 — diabetes.msf.net            │
 └────────────────────┬────────────────────────────────┘
                      │ HTTPS / JSON
                      ▼
-┌─────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────┐
 │               MSF Diabetes API                       │
-│         Node.js / Express — port 3000               │
+│         Node.js / Express — port 3000                │
+|                api.diabetes.msf.net                  |
 │                                                      │
 │  Routes:                                             │
-│    GET  /config              ← config + env vars    │
+│    GET  /config              ← config + env vars     │
 │    POST /calculate           ← main clinical endpoint│
-│    POST /sync-offline-data   ← sync offline episode │
+│    POST /sync-offline-data   ← sync offline episode  │
 │    POST /feedback            ← submit feedback       │
 │    GET  /decrypt             ← admin: decrypt records│
 │                                                      │
 │  Modules:                                            │
 │    validate.js           input validation            │
-│    checkWeightWithinLimit.js  centile check         │
-│    calculateVariables.js      DKA calculations      │
-│    encrypt.js / decrypt.js    AES+RSA encryption    │
-│    generateAuditID.js         unique ID generation  │
+│    checkWeightWithinLimit.js  centile check          │
+│    calculateVariables.js      DKA calculations       │
+│    encrypt.js / decrypt.js    AES+RSA encryption     │
+│    generateAuditID.js         unique ID generation   │
 │    insertData.js              database write         │
-│    handleError.js             logging + alerts      │
-└─────────┬───────────────────────────┬───────────────┘
+│    handleError.js             logging + alerts       │
+└─────────┬───────────────────────────┬────────────────┘
           │ mysql2                    │ Nodemailer
-          ▼                          ▼
+          ▼                           ▼
    ┌─────────────┐           ┌──────────────┐
    │   MySQL DB  │           │  SMTP server │
    │ msfdiabetes │           │  (alerts)    │
@@ -116,9 +117,9 @@ The database stores: the RSA-wrapped AES key, the AES ciphertext, the initialisa
 
 ### Key management
 
-| Key | Location | Who has access |
-|---|---|---|
-| RSA public key | Environment variable `rsaPublicKey` (base64 PEM) | API server |
+| Key             | Location                                          | Who has access                |
+| --------------- | ------------------------------------------------- | ----------------------------- |
+| RSA public key  | Environment variable `rsaPublicKey` (base64 PEM)  | API server                    |
 | RSA private key | Environment variable `rsaPrivateKey` (base64 PEM) | API server + authorised admin |
 
 The private key must never appear in the codebase, logs, or configuration files. It should be treated with the same care as a signing certificate.
@@ -135,6 +136,7 @@ The `/decrypt` endpoint provides a mechanism to recover plaintext patient data f
 Additional restriction at the network layer (e.g. IP allowlist or VPN) is strongly recommended as a second layer of protection.
 
 The endpoint accepts a `decryptID` query parameter:
+
 - `GET /decrypt?decryptID=<auditID>` — decrypts and re-stores a single record by audit ID.
 - `GET /decrypt?decryptID=all` — decrypts and re-stores all records in `tbl_calculate`.
 
@@ -164,11 +166,11 @@ Offline episodes (calculated in the browser without API access) use a client-gen
 
 Three version strings are in use:
 
-| Variable | Meaning |
-|---|---|
-| `process.env.apiVersion` | API application version |
+| Variable                    | Meaning                                       |
+| --------------------------- | --------------------------------------------- |
+| `process.env.apiVersion`    | API application version                       |
 | `process.env.clientVersion` | Client application version at time of request |
-| `process.env.lastUpdated` | Date of last deployment |
+| `process.env.lastUpdated`   | Date of last deployment                       |
 
 These are injected at runtime via environment variables and returned by `GET /config`. They are also stamped on each episode record (`appVersion` column) to allow retrospective identification of which version of the calculation logic was used for any given episode — important if a guideline change or bug fix affects outputs.
 
@@ -208,35 +210,35 @@ The server listens on `process.env.PORT` (default `3000`) and is expected to sit
 
 ### Required environment variables
 
-| Variable | Notes |
-|---|---|
-| `app_select_user` | MySQL username with SELECT-only privileges |
-| `app_select_key` | Password for `app_select_user` |
-| `app_insert_user` | MySQL username with INSERT-only privileges |
-| `app_insert_key` | Password for `app_insert_user` |
-| `rsaPublicKey` | Base64-encoded RSA public key (PEM) |
-| `corsOrigin` | Allowed CORS origin (must match the client URL) |
-| `decryptSecret` | Shared secret for `X-Decrypt-Key` header on `/decrypt` |
-| `emailUser` | SMTP username for error alert emails |
-| `emailPassword` | SMTP password for error alert emails |
-| `emailRecipient` | Address to receive error alerts |
+| Variable          | Notes                                                  |
+| ----------------- | ------------------------------------------------------ |
+| `app_select_user` | MySQL username with SELECT-only privileges             |
+| `app_select_key`  | Password for `app_select_user`                         |
+| `app_insert_user` | MySQL username with INSERT-only privileges             |
+| `app_insert_key`  | Password for `app_insert_user`                         |
+| `rsaPublicKey`    | Base64-encoded RSA public key (PEM)                    |
+| `corsOrigin`      | Allowed CORS origin (must match the client URL)        |
+| `decryptSecret`   | Shared secret for `X-Decrypt-Key` header on `/decrypt` |
+| `emailUser`       | SMTP username for error alert emails                   |
+| `emailPassword`   | SMTP password for error alert emails                   |
+| `emailRecipient`  | Address to receive error alerts                        |
 
 ### Optional environment variables
 
-| Variable | Notes |
-|---|---|
+| Variable        | Notes                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
 | `rsaPrivateKey` | Base64-encoded RSA private key (PEM). If omitted, the server starts normally but `/decrypt` returns `503`. |
-| `PORT` | Port to listen on (default `3000`) |
-| `apiVersion` | Stamped on episode records |
-| `clientVersion` | Stamped on episode records |
-| `lastUpdated` | Returned by `/config` |
+| `PORT`          | Port to listen on (default `3000`)                                                                         |
+| `apiVersion`    | Stamped on episode records                                                                                 |
+| `clientVersion` | Stamped on episode records                                                                                 |
+| `lastUpdated`   | Returned by `/config`                                                                                      |
 
 ### Environment separation
 
-| Environment | `underDevelopment` in config.json | Email alerts |
-|---|---|---|
-| Production | `false` | Enabled |
-| Development / staging | `true` | Suppressed |
+| Environment           | `underDevelopment` in config.json | Email alerts |
+| --------------------- | --------------------------------- | ------------ |
+| Production            | `false`                           | Enabled      |
+| Development / staging | `true`                            | Suppressed   |
 
 The `underDevelopment` flag also causes the client to target the development API URL rather than the production URL.
 
@@ -246,26 +248,26 @@ The `underDevelopment` flag also causes the client to target the development API
 
 All bugs and vulnerabilities identified in the initial code review have been resolved. The following optimisations remain open for future consideration:
 
-| Ref | Impact | Summary |
-|---|---|---|
-| O1 | HIGH | Per-request MySQL connections — a connection pool would reduce latency and DB load |
-| O2 | MEDIUM | `generateAuditID` uniqueness loop has no maximum retry guard |
-| O3 | LOW | `config.json` is loaded inconsistently across modules (top-level vs. inside function body) |
-| O4 | LOW | Clinical calculation logic is tightly coupled to HTML presentation strings, making unit testing harder |
-| O5 | LOW | `errors` array in `calculateVariables` is initialised but never populated — the check in `index.js` is therefore always false |
+| Ref | Impact | Summary                                                                                                                       |
+| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| O1  | HIGH   | Per-request MySQL connections — a connection pool would reduce latency and DB load                                            |
+| O2  | MEDIUM | `generateAuditID` uniqueness loop has no maximum retry guard                                                                  |
+| O3  | LOW    | `config.json` is loaded inconsistently across modules (top-level vs. inside function body)                                    |
+| O4  | LOW    | Clinical calculation logic is tightly coupled to HTML presentation strings, making unit testing harder                        |
+| O5  | LOW    | `errors` array in `calculateVariables` is initialised but never populated — the check in `index.js` is therefore always false |
 
 ---
 
 ## 12. Relationship to the client repository
 
-| Concern | API repo | Client repo |
-|---|---|---|
-| Clinical calculations | Primary (server-side) | Mirror (offline fallback) |
-| Validation rules | Primary (source in `config.json`) | Derived (fetched from `/config`) |
-| Weight centile tables | Primary (in `config.json`) | Mirror (fetched from `/config`) |
-| Audit storage | ✓ | — |
-| Offline support | — | ✓ (localStorage + sync) |
-| PDF output | — | ✓ (pdfmake) |
+| Concern               | API repo                          | Client repo                      |
+| --------------------- | --------------------------------- | -------------------------------- |
+| Clinical calculations | Primary (server-side)             | Mirror (offline fallback)        |
+| Validation rules      | Primary (source in `config.json`) | Derived (fetched from `/config`) |
+| Weight centile tables | Primary (in `config.json`)        | Mirror (fetched from `/config`)  |
+| Audit storage         | ✓                                 | —                                |
+| Offline support       | —                                 | ✓ (localStorage + sync)          |
+| PDF output            | —                                 | ✓ (pdfmake)                      |
 
 The calculation logic in `modules/calculateVariables.js` and the validation logic in `modules/validate.js` have counterparts in the client's `src/assets/offlineCalculator/` directory. **Any change to the clinical logic must be applied to both repositories and released together**, otherwise online and offline calculations may diverge.
 
@@ -305,13 +307,13 @@ This also clarifies a point of possible confusion: **database user credentials a
 
 The revert restored an older, shorter INSERT column list that omitted five fields added for the MSF deployment:
 
-| Field removed by revert | Type | Restored |
-|---|---|---|
-| `useYearsMonths` | BOOL | ✓ |
-| `syringePumpAvailable` | BOOL | ✓ (revert had left `syringeDriverAvailable` — the old BSPED name) |
-| `infusionPumpAvailable` | BOOL | ✓ |
-| `dropFactor` | INT | ✓ |
-| `offlineTimestamp` | DATETIME | ✓ |
+| Field removed by revert | Type     | Restored                                                          |
+| ----------------------- | -------- | ----------------------------------------------------------------- |
+| `useYearsMonths`        | BOOL     | ✓                                                                 |
+| `syringePumpAvailable`  | BOOL     | ✓ (revert had left `syringeDriverAvailable` — the old BSPED name) |
+| `infusionPumpAvailable` | BOOL     | ✓                                                                 |
+| `dropFactor`            | INT      | ✓                                                                 |
+| `offlineTimestamp`      | DATETIME | ✓                                                                 |
 
 The `offlineTimestamp` null-normalisation (undefined → null for online episodes) and an undefined-bind-parameter guard (surfaces the offending field name rather than an opaque mysql2 error) were also restored.
 

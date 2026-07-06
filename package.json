@@ -1,17 +1,17 @@
 {
-  "name": "dka-calculator-api",
+  "name": "msf-diabetes-api",
   "version": "1.0.0",
-  "description": "API for the DKA Calculator web app client",
+  "description": "API for the MSF Diabetes web app client",
   "main": "index.js",
   "scripts": {
     "test": "test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dan-leach/dka-calculator-api.git"
+    "url": "git+https://github.com/dan-leach/msf-diabetes-api.git"
   },
   "keywords": [
-    "dka",
+    "diabetes",
     "dka",
     "calculator",
     "bsped",
@@ -21,9 +21,9 @@
   "author": "https://github.com/dan-leach",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dan-leach/dka-calculator-api/issues"
+    "url": "https://github.com/dan-leach/msf-diabetes-api/issues"
   },
-  "homepage": "https://github.com/dan-leach/dka-calculator-api#readme",
+  "homepage": "https://github.com/dan-leach/msf-diabetes-api#readme",
   "dependencies": {
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

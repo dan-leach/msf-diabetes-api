@@ -1,6 +1,6 @@
 /**
  * @module calculateVariables
- * @memberof module:dka-calculator-api
+ * @memberof module:msf-diabetes-api
  * @summary Performs all clinical calculations required by the DKA management protocol.
  *
  * @description

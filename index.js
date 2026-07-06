@@ -1,6 +1,6 @@
 /**
- * @module dka-calculator-api
- * @summary MSF Diabetes Calculator API — application entry point, middleware setup, and route definitions.
+ * @module msf-diabetes-api
+ * @summary MSF Diabetes API — application entry point, middleware setup, and route definitions.
  *
  * @description
  * Bootstraps the Express server and registers all API routes:
@@ -469,11 +469,9 @@ app.get("/decrypt", decryptLimiter, async (req, res) => {
 
   // Require the RSA private key — without it decryption is impossible.
   if (!process.env.rsaPrivateKey) {
-    return res
-      .status(503)
-      .json({
-        errors: [{ msg: "Decrypt unavailable: rsaPrivateKey not configured" }],
-      });
+    return res.status(503).json({
+      errors: [{ msg: "Decrypt unavailable: rsaPrivateKey not configured" }],
+    });
   }
 
   try {

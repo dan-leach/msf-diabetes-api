@@ -1,6 +1,6 @@
 /**
  * @module validate
- * @memberof module:dka-calculator-api
+ * @memberof module:msf-diabetes-api
  * @summary Defines express-validator rule sets and the shared validation middleware.
  *
  * @description

@@ -1,6 +1,6 @@
 /**
  * @module handleError
- * @memberof module:dka-calculator-api
+ * @memberof module:msf-diabetes-api
  * @summary Module for handling errors.
  *
  * @exports handleError Object containing the different routes available in the feedback module
@@ -32,7 +32,7 @@ function handleError(
   route = "undefinedRoute",
   routeMsg = "API failed at unknown route",
   res,
-  info = []
+  info = [],
 ) {
   // Log the error with a timestamp for debugging
   delete error.statusCode;
@@ -60,8 +60,8 @@ function handleError(
         `;
     sendMail(
       config.author.email,
-      "DKA Calculator status 500 error report",
-      html
+      "MSF Diabetes API status 500 error report",
+      html,
     );
   }
 
@@ -90,7 +90,7 @@ const sendMail = async (email, subject, html) => {
 
   // Configure the email transporter using Nodemailer
   const transporter = nodemailer.createTransport({
-    host: "mail.dka-calculator.co.uk",
+    host: "mail.danleach.uk",
     port: 465,
     secure: true, // true for port 465, false for other ports
     auth: {
@@ -98,14 +98,14 @@ const sendMail = async (email, subject, html) => {
       pass: process.env.emailKey,
     },
     dkim: {
-      domainName: "dka-calculator.co.uk",
+      domainName: "danleach.uk",
       privateKey: process.env.emailDkimPrivateKey,
     },
   });
 
   // Email options including the recipient, subject, HTML content, and attachments
   const mailOptions = {
-    from: "admin@dka-calculator.co.uk",
+    from: "web@danleach.uk",
     to: email,
     subject: subject,
     html: html,

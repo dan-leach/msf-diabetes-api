@@ -1,6 +1,6 @@
 /**
  * @module insertData
- * @memberof module:dka-calculator-api
+ * @memberof module:msf-diabetes-api
  * @summary Handles all database write operations for the API.
  *
  * @description
@@ -73,7 +73,9 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
     `;
 
     // Online episodes have no offline timestamp; normalise undefined to null.
-    data.offlineTimestamp = data.offlineTimestamp ? data.offlineTimestamp : null;
+    data.offlineTimestamp = data.offlineTimestamp
+      ? data.offlineTimestamp
+      : null;
 
     const paramNames = [
       "auditID",
@@ -129,7 +131,7 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
       throw new Error(
         `Undefined bind params for insertCalculateData: ${bad
           .map((x) => x.name)
-          .join(", ")}`
+          .join(", ")}`,
       );
     }
 

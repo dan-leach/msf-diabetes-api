@@ -1,6 +1,6 @@
 /**
  * @module checkWeightWithinLimit
- * @memberof module:dka-calculator-api
+ * @memberof module:msf-diabetes-api
  * @summary Validates that a patient's weight lies within the expected centile range for their age and sex.
  *
  * @description
@@ -78,7 +78,7 @@ function checkWeightWithinLimit(data) {
         }kg) (range ${limit.lower().toFixed(2)}kg to ${limit
           .upper()
           .toFixed(2)}kg for ${data.patientSex} patient aged ${Math.floor(
-          data.patientAge
+          data.patientAge,
         )} years and ${ageInMonths - Math.floor(data.patientAge) * 12} months).`,
       );
     }
