@@ -7,6 +7,7 @@
  *
  *  - `GET  /`                  — Browser redirect to the client application.
  *  - `GET  /config`            — Returns `config.json` augmented with runtime environment values.
+ *  - `GET  /usage`             — Public aggregate usage counts and estimated real episodes.
  *  - `POST /calculate`         — Main clinical endpoint; validates, calculates, encrypts, and stores an episode.
  *  - `POST /sync-offline-data` — Accepts an episode calculated offline by the client and persists it.
  *  - `POST /feedback`          — Stores free-text clinician feedback linked to an audit ID.
@@ -124,6 +125,15 @@ const decryptLimiter = rateLimit({
   message: { errors: [{ msg: "Too many requests, please try again later." }] },
 });
 
+// Public reporting still needs a limit to bound database work.
+const usageLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { errors: [{ msg: "Too many requests, please try again later." }] },
+});
+
 //required to get the client IP address as server is behind a proxy
 app.set("trust proxy", 3);
 
@@ -142,6 +152,26 @@ app.get("/", (req, res) => {
   res.send(
     `Please go to <a href='${config.client.url}'>${config.client.url}</a> instead.`,
   );
+});
+
+/**
+ * @route GET /usage
+ * @summary Public aggregate counts and a one-hour deduplication estimate.
+ * @returns {Object} 200 - Counts only; no record-level metadata.
+ * @returns {Object} 500 - Generic error if the database query fails.
+ */
+app.get("/usage", usageLimiter, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    const { getUsageStats } = require("./modules/usage");
+    res.json(await getUsageStats());
+  } catch (error) {
+    // Keep database details out of this public endpoint's error response.
+    console.error("[/usage] Failed to retrieve usage statistics:", error.code || error.name);
+    res.status(500).json({
+      errors: [{ msg: "Unable to retrieve usage statistics." }],
+    });
+  }
 });
 
 /**
