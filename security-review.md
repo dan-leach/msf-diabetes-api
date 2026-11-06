@@ -90,6 +90,10 @@ The operator reports:
 - Database version string `8.0.46-cll-lve`; x86_64 with a CloudLinux/LVE
   EL8-style kernel.
 - **Production Node v20.20.2.** The official Node release table marks Node 20 EOL.
+- The supplied cPanel screenshot confirms the Node.js Selector interface,
+  **Production** application mode and **`index.js`** as the startup file.
+  Kualo documents its Selector as Passenger-based [R10]; this does not establish
+  the full ingress chain or a safe Express proxy-hop count.
 - **The RSA private key is not online in the current version.**
 - A single operator currently controls access to data, logs and backups.
 
@@ -617,8 +621,9 @@ Already answered: Kualo shared hosting, initial Apache/cPanel/database version
 strings, Node v20.20.2, offline production RSA private key and single-operator
 access. Do not request passwords, keys or an unredacted environment dump.
 
-1. **Ingress:** Apache-to-Node integration (for example Passenger, if used),
-   CDN/WAF and exact reverse-proxy chain; is the Node port
+1. **Ingress:** The screenshot identifies the Node.js Selector setup, documented
+   by Kualo as Passenger-based. Confirm any CDN/WAF and the exact reverse-proxy
+   chain; is the Node port
    reachable directly, are there different-length paths, and which proxy overwrites
    or appends forwarding headers? Are compressed request bodies forwarded?
 2. **Runtime:** Supported Node upgrade options and vendor OS/MySQL security
@@ -670,3 +675,4 @@ prerequisites; local applicability is assessed separately above.
 - **R7:** [USENIX Security 2025: We Have a Package for You!](https://www.usenix.org/conference/usenixsecurity25/presentation/spracklen), primary research on code-generating LLM package hallucinations.
 - **R8:** [NCSC: Impact of AI on cyber threat from now to 2027](https://www.ncsc.gov.uk/report/impact-ai-cyber-threat-now-2027), assessment of AI-enabled vulnerability research, exploitation and patch urgency.
 - **R9:** [NIST finalised post-quantum standards](https://www.nist.gov/news-events/news/2024/08/nist-releases-first-3-finalized-post-quantum-encryption-standards), 13 August 2024; long-term cryptographic migration context.
+- **R10:** [Kualo: Enabling Node.js in cPanel](https://www.kualo.com/knowledgebase/dev-languages/enabling-nodejs-in-cpanel), updated 13 June 2026; documents Node.js Selector and Passenger integration, not the specific account's complete ingress topology.
