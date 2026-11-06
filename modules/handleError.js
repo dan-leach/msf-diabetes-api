@@ -24,7 +24,7 @@
  * @param {string} [routeMsg="API failed at unknown route"] - A custom message describing the error context.
  * @param {object} res - The Express.js response object for sending the error response.
  * @param {array} [info=[]] - An array of additional informational strings such as a audit ID or request parameter.
- * @throws {Error} - If email sending fails, this function may throw an error.
+ * Email delivery failures are logged separately and do not affect the response.
  */
 function handleError(
   error,
@@ -62,7 +62,10 @@ function handleError(
       config.author.email,
       "MSF Diabetes API status 500 error report",
       html,
-    );
+    ).catch(() => {
+      // Do not recurse into handleError or expose SMTP credentials in logs.
+      console.error("Error email notification failed", { route, statusCode });
+    });
   }
 
   console.error(" ");
@@ -77,7 +80,7 @@ function handleError(
  * @param {string} email - The recipient's email address.
  * @param {string} subject - The subject line of the email.
  * @param {string} html - The HTML content of the email.
- * @returns {Promise<boolean>} - Returns a promise that resolves to `true` if the email was sent successfully, or `false` if an error occurred.
+ * @returns {Promise<boolean>} - Resolves to `true` on delivery or `false` when disabled; rejects on delivery failure.
  */
 const sendMail = async (email, subject, html) => {
   const config = require("../config.json");

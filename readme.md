@@ -302,9 +302,58 @@ The API targets MySQL. Two database users with least-privilege access are used:
 | `offlineTimestamp`      | DATETIME           | Client timestamp for synced offline episodes; null otherwise |
 | `serverDatetime`        | DATETIME           | Set by MySQL `DEFAULT CURRENT_TIMESTAMP`                     |
 
+### Usage monitoring
+
+`GET /usage` returns public JSON statistics for all records in `tbl_calculate`.
+No authentication is required. The route is limited to 60 requests per hour per
+IP and uses the existing SELECT-only database account.
+
+- `records`: total, test, real and other/unrecognised record counts.
+- `estimatedRealEpisodes`: estimated distinct **real** episodes only.
+- `likelyDuplicateRealRecords`: real records skipped by deduplication.
+- `realRecordsExcludedFromEstimate`: real records with unusable timestamps or
+  missing client IP/project; these remain in the raw real count. Reasons are
+  mutually exclusive: timestamp is checked first.
+- `deduplication`: the grouping and timing rules used.
+
+Deduplication groups real records by **client IP and project**, sorts them by
+occurrence time, counts the earliest, then excludes records less than one hour
+after the last counted record. Skipped records do not extend that window.
+Exactly one hour later counts as a new episode. Online records
+(`serverCalculations = 1`) use `serverDatetime`; offline records
+(`serverCalculations = 0`) use `offlineTimestamp`, supporting MySQL DATETIME and
+13-digit epoch-millisecond values. Both sources are compared together.
+DATETIME values use the database session timezone, so stored online/offline
+DATETIME values must use a consistent timezone.
+
+This is a heuristic, not a patient count: shared IPs may merge unrelated uses,
+and IP changes may split related uses. Offline records use the IP captured at
+sync. No IPs, project values or patient data are included in the response.
+Failures return a generic HTTP 500 error rather than zero counts.
+
+Implementation: `modules/usage.js`, wired into `index.js`. Run its tests with
+`node --test tests/usage.test.js`.
+
 ---
 
 ## Testing
+
+Run the automated tests with:
+
+```bash
+npm test
+```
+
+These exercise usage reporting and the real Express/JSON-parser setup using
+synthetic data and database substitutes. Request-parser regressions, including
+compressed streams with trailing bytes, run in an isolated local child process;
+no production credentials, database access or email delivery are required.
+They do not replace staging tests of the clinical calculation workflow.
+
+After task merges, the configured `scripts/post-merge.sh` hook performs a clean
+lockfile-based dependency install and runs the automated tests. It does not
+connect to production MySQL, run migrations or send email; the platform handles
+workflow reconciliation separately.
 
 `tests.json` is a Postman collection that covers the full range of `GET /config` and `POST /calculate` scenarios (mild, standard, severe DKA; various equipment availability combinations). Import it into [Postman](https://www.postman.com/) and point the collection variables at your target environment.
 

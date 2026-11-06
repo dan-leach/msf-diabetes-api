@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "quszqwluD1BrZZDGbe3cg"
+uri = "file://security-review.md"
+type = "text"
+title = "MSF Diabetes API security review"
+description = "Prioritised security risk register with code evidence, risk ratings, mitigation options, implementation difficulty, recent research and deployment questions."
+logical_id = "3e5311b2-0bb9-4b66-b877-c501b5be905c"
+content_hash = "sha256:240670f5c07034a51ffd95a4680aa9db0d1b3e67478ad257bae9cb3e6dcf85d4"
+size = 38490
+mtime_ms = 1793959455070
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:6bfe9e3d-917c-47c8-a854-799420929bb4/3e5311b2-0bb9-4b66-b877-c501b5be905c/11b7fc61-1bc4-47df-9ba1-06337b60c717"
+storage_version_token = "1793959468268866"
+content_type = "text/markdown"

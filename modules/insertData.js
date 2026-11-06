@@ -165,8 +165,9 @@ async function insertCalculateData(data, encryptedData, auditID, clientIP) {
  * @throws {Error} If the connection cannot be established or the INSERT fails.
  */
 async function insertFeedback(feedbackText, auditID) {
+  let connection;
   try {
-    const connection = await mysql.createConnection({
+    connection = await mysql.createConnection({
       host: "localhost",
       user: process.env.app_insert_user,
       password: process.env.app_insert_key,
@@ -181,10 +182,12 @@ async function insertFeedback(feedbackText, auditID) {
   } catch (error) {
     throw new Error(`Feedback could not be logged: ${error.message}`);
   } finally {
-    try {
-      await connection.end();
-    } catch {
-      //no connection to close
+    if (connection) {
+      try {
+        await connection.end();
+      } catch {
+        // Preserve the insert outcome if closing the connection fails.
+      }
     }
   }
 }
