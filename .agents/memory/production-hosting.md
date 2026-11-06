@@ -9,8 +9,11 @@ production version. Access to data, logs and backups is currently single-operato
 The supplied cPanel screenshot shows Node.js Selector, Production mode and
 `index.js` as the startup file. Kualo describes this setup as Passenger-based,
 but the screenshot does not establish the full proxy chain.
-The operator confirms no CDN is configured; hosting-managed internal proxies
-remain unverified.
+The operator has not configured a CDN for the current deployment. The original
+domain went through Cloudflare; the user says the three-hop trust setting was
+correct for that setup. The current diabetes.msf.net domain goes through MSF,
+and the user does not know its proxy steps. Do not assume MSF only manages DNS
+or that it adds an HTTP proxy; MSF/Kualo-managed routing remains unverified.
 
 **Why:** The user supplied these facts during the security review; development
 configuration alone does not establish production setup.
