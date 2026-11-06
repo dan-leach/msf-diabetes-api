@@ -9,6 +9,8 @@ production version. Access to data, logs and backups is currently single-operato
 The supplied cPanel screenshot shows Node.js Selector, Production mode and
 `index.js` as the startup file. Kualo describes this setup as Passenger-based,
 but the screenshot does not establish the full proxy chain.
+The operator confirms no CDN is configured; hosting-managed internal proxies
+remain unverified.
 
 **Why:** The user supplied these facts during the security review; development
 configuration alone does not establish production setup.

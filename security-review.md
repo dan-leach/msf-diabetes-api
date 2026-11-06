@@ -96,6 +96,8 @@ The operator reports:
   the full ingress chain or a safe Express proxy-hop count.
 - **The RSA private key is not online in the current version.**
 - A single operator currently controls access to data, logs and backups.
+- The operator confirms **no CDN is configured**. This does not rule out
+  Kualo-managed internal proxies or other hosting-layer protection.
 
 The host's name and shared public IP are not needed for these findings and are
 not reproduced here. Apache/cPanel/CloudLinux package strings do not establish
@@ -622,7 +624,8 @@ strings, Node v20.20.2, offline production RSA private key and single-operator
 access. Do not request passwords, keys or an unredacted environment dump.
 
 1. **Ingress:** The screenshot identifies the Node.js Selector setup, documented
-   by Kualo as Passenger-based. Confirm any CDN/WAF and the exact reverse-proxy
+   by Kualo as Passenger-based. No CDN is configured by the operator. Confirm
+   any hosting-managed proxy/WAF and the exact reverse-proxy
    chain; is the Node port
    reachable directly, are there different-length paths, and which proxy overwrites
    or appends forwarding headers? Are compressed request bodies forwarded?
