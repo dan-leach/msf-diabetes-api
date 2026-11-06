@@ -23,6 +23,15 @@ is reviewed and deployed.
 
 The assessment below preserves the original review snapshot and its scan counts.
 
+**Post-merge setup follow-up:** A clean install exposed security-firewall blocks
+that the incremental dependency update did not encounter. The unused `sqlite3`
+dependency was removed after confirming application code uses `mysql2`, and a
+compatible `proxy-addr` override requires the patched 2.0.8 line or later.
+The configured post-merge hook now clean-installs the lockfile and runs tests.
+This addresses the specific proxy-addr package advisory, **not** the unresolved
+proxy topology/trust configuration in S07. No database was migrated or replaced.
+The prior dependency counts are historical and were not recalculated here.
+
 ## Executive summary
 
 The highest-priority concerns are availability failures and insufficient validation
@@ -154,6 +163,7 @@ its own access/retention assessment.
 | S16 | Retention and secondary copies may bypass encryption protections | Medium–High, conditional | Moderate–Hard |
 | S17 | AI-assisted development introduces prompt-injection/supply-chain risks | Medium–High, conditional | Moderate |
 | S18 | Encryption lifecycle lacks explicit migration/key-version strategy | Low near-term; Medium for long-lived records | Moderate–Hard |
+| S19 | Private-key material exists in tracked development configuration | High if used for real data; Low if disposable test-only | Moderate–Hard |
 
 ### S01 — Request-parser vulnerability before route-level protection
 
@@ -597,6 +607,30 @@ and existing stored data. Prioritise S01–S07 over an emergency bespoke crypto 
 
 **Difficulty:** **Moderate** for lifecycle/version design; **Hard** for a complete
 cross-client historical-data migration.
+
+### S19 — Private-key material in tracked development configuration
+
+**Hazard / rating:** **High if the key protects real data**, **Low if confirmed
+disposable test-only material**. This is separate from the operator's statement
+that the production private key is offline.
+
+**Evidence:** Post-merge setup troubleshooting found a private-key value in the
+tracked `.replit` environment configuration. Its value is deliberately not
+reproduced in this report. Repository copies, history, forks and tooling may retain
+tracked configuration; moving the current value alone does not revoke old copies.
+Whether this is a test key or a key used for actual records is unconfirmed.
+
+**Mitigation options:** Establish the key's purpose without sharing its value.
+If it protects real data, treat it as exposed, move confidential configuration
+to proper secret storage and plan key rotation with secure retention/rewrapping
+of historical records. Do not delete the only key needed to recover old records.
+Any history rewrite requires coordination and explicit approval. If disposable,
+replace it with clearly documented test-fixture handling that cannot be mistaken
+for production key management.
+
+**Difficulty:** **Moderate** for configuration and custody changes; **Hard** if
+historical real-data re-encryption or coordinated history cleanup is necessary.
+No key rotation, deletion or history rewrite was performed.
 
 ## Dependency triage: important qualifications
 

@@ -2,3 +2,4 @@
 - [Git review workflow](git-review-workflow.md) — never push to main; user performs a final AI-free review in the GitHub PR.
 - [Usage reporting scope](usage-reporting-scope.md) — report test counts once; deduplicate only real episodes within the same client IP and project.
 - [Production hosting](production-hosting.md) — operator-reported Kualo shared hosting; private RSA key offline; verify production runtime and proxy topology.
+- [Clean-install security](clean-install-security.md) — incremental installs can hide firewall-blocked transitive dependencies; verify clean post-merge bootstrap.

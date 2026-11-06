@@ -350,6 +350,11 @@ compressed streams with trailing bytes, run in an isolated local child process;
 no production credentials, database access or email delivery are required.
 They do not replace staging tests of the clinical calculation workflow.
 
+After task merges, the configured `scripts/post-merge.sh` hook performs a clean
+lockfile-based dependency install and runs the automated tests. It does not
+connect to production MySQL, run migrations or send email; the platform handles
+workflow reconciliation separately.
+
 `tests.json` is a Postman collection that covers the full range of `GET /config` and `POST /calculate` scenarios (mild, standard, severe DKA; various equipment availability combinations). Import it into [Postman](https://www.postman.com/) and point the collection variables at your target environment.
 
 ---
