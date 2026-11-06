@@ -338,6 +338,18 @@ Implementation: `modules/usage.js`, wired into `index.js`. Run its tests with
 
 ## Testing
 
+Run the automated tests with:
+
+```bash
+npm test
+```
+
+These exercise usage reporting and the real Express/JSON-parser setup using
+synthetic data and database substitutes. Request-parser regressions, including
+compressed streams with trailing bytes, run in an isolated local child process;
+no production credentials, database access or email delivery are required.
+They do not replace staging tests of the clinical calculation workflow.
+
 `tests.json` is a Postman collection that covers the full range of `GET /config` and `POST /calculate` scenarios (mild, standard, severe DKA; various equipment availability combinations). Import it into [Postman](https://www.postman.com/) and point the collection variables at your target environment.
 
 ---

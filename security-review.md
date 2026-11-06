@@ -5,6 +5,24 @@
 **Reviewed revision:** `62a4c2c` (before this report)  
 **Status:** Code review complete; initial deployment answers incorporated. Proxy topology, database grants and backup/retention controls still require confirmation.
 
+## Targeted remediation update
+
+**S01 is patched on the development branch, not yet deployed.** Express is now
+4.22.3 and `body-parser` is 1.20.9, retaining the existing major versions.
+The installed tree and lockfile use the patched parser for both the direct
+dependency and Express. Automated tests cover normal/compressed JSON, parser
+errors, the body-size limit and immediate/delayed trailing bytes in an isolated
+local child process without database credentials.
+
+A post-update dependency audit no longer reports Express/body-parser findings.
+It still reports **70 package/version advisory records**: 1 critical, 28 high,
+38 moderate and 3 low. The proxy-addr critical advisory remains subject to the
+applicability qualification in S07. Other findings below remain open unless
+explicitly stated otherwise; production remains unpatched until this change
+is reviewed and deployed.
+
+The assessment below preserves the original review snapshot and its scan counts.
+
 ## Executive summary
 
 The highest-priority concerns are availability failures and insufficient validation
@@ -24,8 +42,10 @@ a break of AES encryption.
    The private RSA key is currently offline, substantially reducing current
    decryption exposure. Other data-access and backup controls still need confirmation.
 
-**No production exploitation, database access, credential inspection, application
-fixes, dependency upgrades or Git pushes were performed.** The intentionally public
+**During the original review, no production exploitation, database access,
+credential inspection, application fixes, dependency upgrades or Git pushes
+were performed.** The later dependency-only remediation is recorded above.
+The intentionally public
 `/usage` route is not classified as a vulnerability merely because it lacks login.
 Its resource consumption and the trustworthiness of its inputs are separate risks.
 
@@ -136,6 +156,9 @@ its own access/retention assessment.
 | S18 | Encryption lifecycle lacks explicit migration/key-version strategy | Low near-term; Medium for long-lived records | Moderate–Hard |
 
 ### S01 — Request-parser vulnerability before route-level protection
+
+**Remediation status:** patched on `v1.1`; production rollout outstanding.
+The original evidence and rating below describe the pre-fix dependency tree.
 
 **Hazard / rating:** **High**, if production uses the locked vulnerable parser and
 passes compressed request bodies through to Node.
@@ -577,7 +600,7 @@ cross-client historical-data migration.
 
 ## Dependency triage: important qualifications
 
-| Locked component | Scanner result / relevant condition | Recommended handling |
+| Original reviewed component | Scanner result / relevant condition | Recommended handling |
 | --- | --- | --- |
 | `body-parser` 1.20.2 | High recent compressed-body crash; applies to configured parser unless edge eliminates that input | Prioritise S01; update every installed copy |
 | `proxy-addr` 2.0.7 | Critical upstream severity for particular IPv6 trust-subnet configurations | Patch, but specific advisory prerequisites are not shown by current numeric trust setting; see S07 |
