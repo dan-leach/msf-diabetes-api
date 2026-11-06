@@ -163,7 +163,7 @@ its own access/retention assessment.
 | S16 | Retention and secondary copies may bypass encryption protections | Medium–High, conditional | Moderate–Hard |
 | S17 | AI-assisted development introduces prompt-injection/supply-chain risks | Medium–High, conditional | Moderate |
 | S18 | Encryption lifecycle lacks explicit migration/key-version strategy | Low near-term; Medium for long-lived records | Moderate–Hard |
-| S19 | Private-key material exists in tracked development configuration | High if used for real data; Low if disposable test-only | Moderate–Hard |
+| S19 | Disposable test key exists in tracked development configuration | Low; operator confirmed test-only | Easy |
 
 ### S01 — Request-parser vulnerability before route-level protection
 
@@ -610,26 +610,21 @@ cross-client historical-data migration.
 
 ### S19 — Private-key material in tracked development configuration
 
-**Hazard / rating:** **High if the key protects real data**, **Low if confirmed
-disposable test-only material**. This is separate from the operator's statement
-that the production private key is offline.
+**Hazard / rating:** **Low**. The operator confirmed that this is a **disposable
+test key**. It is not evidence of exposure of the offline production private key.
 
 **Evidence:** Post-merge setup troubleshooting found a private-key value in the
 tracked `.replit` environment configuration. Its value is deliberately not
 reproduced in this report. Repository copies, history, forks and tooling may retain
 tracked configuration; moving the current value alone does not revoke old copies.
-Whether this is a test key or a key used for actual records is unconfirmed.
+The operator has confirmed its disposable test-only purpose.
 
-**Mitigation options:** Establish the key's purpose without sharing its value.
-If it protects real data, treat it as exposed, move confidential configuration
-to proper secret storage and plan key rotation with secure retention/rewrapping
-of historical records. Do not delete the only key needed to recover old records.
-Any history rewrite requires coordination and explicit approval. If disposable,
-replace it with clearly documented test-fixture handling that cannot be mistaken
-for production key management.
+**Mitigation options:** Clearly label or generate test fixtures so they cannot be
+mistaken for production credentials. Never use this key for real patient records.
+No production-key rotation, historical-data re-encryption or repository history
+rewrite is warranted solely by this confirmed disposable test key.
 
-**Difficulty:** **Moderate** for configuration and custody changes; **Hard** if
-historical real-data re-encryption or coordinated history cleanup is necessary.
+**Difficulty:** **Easy** for test-fixture documentation or generation.
 No key rotation, deletion or history rewrite was performed.
 
 ## Dependency triage: important qualifications
