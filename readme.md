@@ -310,6 +310,10 @@ IP and uses the existing SELECT-only database account.
 
 - `records`: total, test, real and other/unrecognised record counts.
 - `estimatedRealEpisodes`: estimated distinct **real** episodes only.
+- `estimatedRealEpisodesByMonth`: those same estimated real episodes grouped by
+  UTC calendar month, in chronological order. Each item contains `month`
+  (`YYYY-MM`) and `estimatedRealEpisodes`. Only months with counted episodes
+  appear; an empty estimate returns `[]`. Test records are not broken down by month.
 - `likelyDuplicateRealRecords`: real records skipped by deduplication.
 - `realRecordsExcludedFromEstimate`: real records with unusable timestamps or
   missing client IP/project; these remain in the raw real count. Reasons are
@@ -325,6 +329,21 @@ Exactly one hour later counts as a new episode. Online records
 13-digit epoch-millisecond values. Both sources are compared together.
 DATETIME values use the database session timezone, so stored online/offline
 DATETIME values must use a consistent timezone.
+
+Monthly counts are assigned **after** deduplication, so a duplicate just after
+midnight on the first of a month is still excluded if it is less than one hour
+after a counted episode in the previous month. Monthly counts sum to
+`estimatedRealEpisodes`. For example:
+
+```json
+{
+  "estimatedRealEpisodes": 15,
+  "estimatedRealEpisodesByMonth": [
+    { "month": "2026-10", "estimatedRealEpisodes": 6 },
+    { "month": "2026-11", "estimatedRealEpisodes": 9 }
+  ]
+}
+```
 
 This is a heuristic, not a patient count: shared IPs may merge unrelated uses,
 and IP changes may split related uses. Offline records use the IP captured at
