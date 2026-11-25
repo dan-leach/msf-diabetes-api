@@ -6,6 +6,8 @@ description: Operator-reported production context relevant to deployment and sec
 The operator reports Kualo shared-IP Linux hosting with cPanel and
 production Node v20.20.2. The RSA private key is not online in the current
 production version. Access to data, logs and backups is currently single-operator.
+The operator subsequently reported Node 26.13.1 is available in cPanel.
+Availability is not confirmation that production has been switched to it.
 The user confirmed that the RSA private key in the workspace's tracked
 development configuration is a disposable test key, not the production key.
 The supplied cPanel screenshot shows Node.js Selector, Production mode and
