@@ -36,7 +36,8 @@ No new dependency, static or privacy scan was run for this documentation refresh
 
 Subsequent `v1.2` work adds UTC monthly counts of estimated real episodes to
 `/usage`, after deduplication. It does not fix S09's full-table processing cost.
-The last completed automated regression run passed all **31 tests**; these are
+The last completed automated regression run passed all **36 tests**, including
+the temporary proxy logger's bounds, redaction and actual Express observations; these are
 functional/regression checks using synthetic data, not a production security
 assessment. No database was migrated or replaced.
 
@@ -55,7 +56,8 @@ Current priorities:
    release, unless that has already been done.
 3. **Resolve S07 using observations on Kualo.** MSF provides DNS only; LiteSpeed
    handles traffic into Node. Forwarding-header sanitisation and socket values
-   remain unverified, so a replacement for `trust proxy = 3` must not be guessed.
+   remain unverified. The operator has authorised a provisional one-hop trial
+   with bounded opt-in logging; this does not close S07.
 4. **Reduce disclosure and abuse consequences:** generic errors, safe/bounded
    alerts, verified database permissions and backup/retention controls.
 5. **Address input-type consistency and offline schemas** with client-compatible
@@ -370,15 +372,21 @@ the operational workflow permits it.
 
 ### S07 — Proxy trust is unsafe unless ingress topology matches it
 
-**Remediation status:** configuration unresolved; account-specific ingress
-confirmed by Kualo and MSF, production observations still pending. No protected
-diagnostic has been added and the trust setting has not been changed.
+**Remediation status:** verification pending. On `v1.2`, at the operator's
+request, `trust proxy` has been changed from **3 to 1 for a controlled trial**.
+Temporary logging in `modules/proxyDiagnostics.js` is disabled by default and
+requires `PROXY_DIAGNOSTICS=1` plus a marked `GET /config` request. It adds no
+public diagnostic endpoint or response fields. Collection is bounded to 50
+entries per process and selected, length-limited network fields. See the README's
+“Temporary proxy observations (S07)” instructions. Deployment and observations
+from Kualo remain unconfirmed; the one-hop policy is not yet verified as safe.
 
 **Hazard / rating:** **High, conditional**. Spoofed client IPs can bypass IP-based
 limits and corrupt IP-based reporting.
 
-**Evidence:** `index.js:137–138` unconditionally trusts three proxy hops.
-It listens on `0.0.0.0` (`:552–554`); that alone does not prove Internet exposure.
+**Historical evidence:** The original `index.js` unconditionally trusted three
+proxy hops. The trial now trusts one. Binding to `0.0.0.0` alone does not prove
+Internet exposure.
 All IP rate limits and stored `req.ip` values depend on the trust boundary.
 
 If any ingress path has fewer hops, allows direct origin access, or fails to
@@ -420,7 +428,7 @@ staging. Do not blindly change this to `true`, a guessed hop count or a guessed 
    fixed hop count only after all ingress paths and sanitisation are verified.
    A caller's fabricated address must not become the effective client IP.
    Re-run ordinary and spoofed requests after the change before closing S07.
-6. Remove/disable the diagnostic and remove temporary observations after review.
+6. Disable `PROXY_DIAGNOSTICS`, restart, and remove temporary observations after review.
    cPanel access logs alone may not expose the required application-level values.
 
 **Difficulty:** **Moderate**, mainly infrastructure verification and deployment tests.

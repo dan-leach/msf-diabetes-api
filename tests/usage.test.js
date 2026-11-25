@@ -174,7 +174,9 @@ test("GET /usage is wired without authentication and returns safe JSON errors", 
   const routes = new Map();
   let fail = false;
   const app = {
-    use() {}, set() {}, post() {}, listen() {},
+    use() {}, set(key, value) {
+      if (key === "trust proxy") assert.equal(value, 1);
+    }, post() {}, listen() {},
     get(path, ...handlers) { routes.set(path, handlers); },
   };
   const response = () => ({
@@ -194,6 +196,7 @@ test("GET /usage is wired without authentication and returns safe JSON errors", 
     "./config.json": require("../config.json"),
     "./modules/validate": {},
     "./modules/handleError": {},
+    "./modules/proxyDiagnostics": { createProxyDiagnostics: () => middleware },
     "./modules/usage": {
       async getUsageStats() {
         if (fail) throw new Error("private database details");

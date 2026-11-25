@@ -308,6 +308,14 @@ The server listens on `process.env.PORT` (default `3000`) and is expected to sit
 | `apiVersion`    | Stamped on episode records                                                                                 |
 | `clientVersion` | Stamped on episode records                                                                                 |
 | `lastUpdated`   | Returned by `/config`                                                                                      |
+| `PROXY_DIAGNOSTICS` | Temporary opt-in proxy logging when exactly `1`; disabled by default. See the README's “Temporary proxy observations (S07)” procedure. |
+
+The current `trust proxy = 1` setting is a provisional LiteSpeed trial, not a
+closed security finding. To collect observations after deployment, enable the
+flag, restart, then request `GET /config` with `X-Proxy-Diagnostic: 1`.
+Only the first 50 marked requests per process are logged to application stdout;
+no extra fields are returned to callers. Disable the flag and restart after
+collection. The README contains normal/forged-header commands and log details.
 
 ### Environment separation
 

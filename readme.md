@@ -46,6 +46,7 @@ Optional variables:
 | `emailDkimPrivateKey` | DKIM private key for outbound email signing (production only)                                                      |
 | `decryptSecret`       | Shared secret for the `/decrypt` route — must be sent as `X-Decrypt-Key` header; if unset, the route returns `401` |
 | `PORT`                | Listening port (default: `3000`)                                                                                   |
+| `PROXY_DIAGNOSTICS`   | Temporary S07 logging: set exactly `1` to enable marked `/config` probes; disabled otherwise. See below.          |
 
 Start the server:
 
@@ -352,6 +353,68 @@ Failures return a generic HTTP 500 error rather than zero counts.
 
 Implementation: `modules/usage.js`, wired into `index.js`. Run its tests with
 `node --test tests/usage.test.js`.
+
+### Temporary proxy observations (S07)
+
+`trust proxy` is provisionally set to **1** for a controlled trial behind Kualo
+LiteSpeed. This is not confirmation that forwarding headers are safe.
+
+After deploying this code to Kualo:
+
+1. Set the cPanel Node environment variable `PROXY_DIAGNOSTICS` to `1` and
+   restart the application. Logging is disabled when the variable is absent or
+   has any other value.
+2. From your own computer (not cPanel Terminal), send the following requests.
+   Note the time of each and your actual public IP; repeat from a mobile
+   connection if practical.
+
+```bash
+# Ordinary request
+curl -sS -o /dev/null -H 'X-Proxy-Diagnostic: 1' \
+  https://api.diabetes.msf.net/config
+
+# Deliberately fabricated client address
+curl -sS -o /dev/null -H 'X-Proxy-Diagnostic: 1' \
+  -H 'X-Forwarded-For: 198.51.100.123' \
+  https://api.diabetes.msf.net/config
+
+# Deliberately fabricated address chain
+curl -sS -o /dev/null -H 'X-Proxy-Diagnostic: 1' \
+  -H 'X-Forwarded-For: 198.51.100.123, 203.0.113.123' \
+  https://api.diabetes.msf.net/config
+
+# Repeated forwarding headers and fabricated protocol
+curl -sS -o /dev/null -H 'X-Proxy-Diagnostic: 1' \
+  -H 'X-Forwarded-For: 198.51.100.123' \
+  -H 'X-Forwarded-For: 203.0.113.123' \
+  -H 'X-Forwarded-Proto: http' \
+  https://api.diabetes.msf.net/config
+```
+
+These commands use macOS/Linux shell syntax. On Windows Command Prompt, use
+`curl.exe`, replace `/dev/null` with `NUL`, put each command on one line and use
+double quotes for header values.
+
+3. Collect lines beginning **`[proxy-diagnostic]`** from the Node application's
+   configured stdout/application log on Kualo, not the HTTP access log. Each is
+   one JSON observation containing the timestamp, trust setting, socket address/
+   family, forwarded address/protocol headers (including repeated instances),
+   and Express's `ip`, `ips` and `protocol`. Missing values are `null`.
+4. Verify that `ip` matches your actual public IP and does not change to a
+   fabricated address. Working calculations alone do not establish this.
+   Local Replit tests cannot establish LiteSpeed's behaviour.
+5. Remove `PROXY_DIAGNOSTICS` or set it to `0`, then restart. Delete temporary
+   observations after review; they contain network addresses.
+
+Only `GET /config` requests with `X-Proxy-Diagnostic: 1` are logged. The marker
+is an opt-in selector, **not authentication**; observations are private server
+logs, never response fields. No new diagnostic endpoint is exposed. Cookies,
+authorisation headers, bodies, query strings and arbitrary headers are excluded.
+Logging stops after **50 entries per process** (reset on restart); header values
+are capped at 1,024 characters and raw forwarding-header entries at eight.
+`truncated: true` means the observation is incomplete and should not be used to
+conclude the policy is safe. Disable the flag when finished even if the cap
+has been reached.
 
 ---
 
