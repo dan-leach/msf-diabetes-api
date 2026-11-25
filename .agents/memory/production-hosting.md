@@ -27,3 +27,12 @@ configuration alone does not establish production setup.
 deployment decisions. Do not treat web decryption as active while its private
 key is offline. Shared hosting does not establish proxy hop count, database
 grants, backup policy or the host's security patch coverage.
+
+For the proxy-trust investigation, do not ask the support team for more help;
+find any further information ourselves.
+
+**Why:** The user said support has already provided a response and asked to
+investigate ourselves.
+
+**How to apply:** Gather controlled observations from the application rather
+than proposing another support request.
