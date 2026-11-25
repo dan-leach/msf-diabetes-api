@@ -55,6 +55,7 @@ const {
   feedbackRules,
 } = require("./modules/validate");
 const { handleError } = require("./modules/handleError");
+const { createProxyDiagnostics } = require("./modules/proxyDiagnostics");
 
 const app = express();
 app.use(cors({ origin: config.client.url }));
@@ -134,8 +135,12 @@ const usageLimiter = rateLimit({
   message: { errors: [{ msg: "Too many requests, please try again later." }] },
 });
 
-//required to get the client IP address as server is behind a proxy
-app.set("trust proxy", 3);
+// Provisional one-hop policy for the LiteSpeed -> Node path.
+// Verify on Kualo with normal and forged-header requests before closing S07.
+app.set("trust proxy", 1);
+app.use(createProxyDiagnostics({
+  enabled: process.env.PROXY_DIAGNOSTICS === "1",
+}));
 
 /**
  * @route GET /

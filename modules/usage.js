@@ -7,6 +7,8 @@ const mysql = require("mysql2/promise");
 const config = require("../config.json");
 
 const DEDUPLICATION_WINDOW_MS = 60 * 60 * 1000;
+// Keep timestamps within the four-digit calendar years used by monthly output.
+const MAX_EPISODE_TIMESTAMP_MS = Date.UTC(10000, 0, 1) - 1;
 
 /**
  * Estimate real episodes within each (clientIP, project) group.
@@ -35,7 +37,8 @@ function summariseUsage(rows) {
       row.episodeTimestamp === undefined || row.episodeTimestamp === ""
       ? NaN
       : Number(row.episodeTimestamp);
-    if (!Number.isFinite(timestamp) || timestamp <= 0) {
+    if (!Number.isFinite(timestamp) || timestamp <= 0 ||
+      timestamp > MAX_EPISODE_TIMESTAMP_MS) {
       missingTimestamp++;
       continue;
     }
@@ -54,6 +57,7 @@ function summariseUsage(rows) {
   }
 
   let estimatedRealEpisodes = 0;
+  const monthlyCounts = new Map();
   let likelyDuplicateRealRecords = 0;
   for (const timestamps of groups.values()) {
     timestamps.sort((a, b) => a - b);
@@ -61,6 +65,8 @@ function summariseUsage(rows) {
     for (const timestamp of timestamps) {
       if (timestamp - lastCountedTimestamp >= DEDUPLICATION_WINDOW_MS) {
         estimatedRealEpisodes++;
+        const month = new Date(timestamp).toISOString().slice(0, 7);
+        monthlyCounts.set(month, (monthlyCounts.get(month) || 0) + 1);
         lastCountedTimestamp = timestamp;
       } else {
         likelyDuplicateRealRecords++;
@@ -71,6 +77,9 @@ function summariseUsage(rows) {
   return {
     records: counts,
     estimatedRealEpisodes,
+    estimatedRealEpisodesByMonth: [...monthlyCounts.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, count]) => ({ month, estimatedRealEpisodes: count })),
     likelyDuplicateRealRecords,
     realRecordsExcludedFromEstimate: {
       total: missingTimestamp + missingGrouping,
@@ -84,6 +93,7 @@ function summariseUsage(rows) {
       rule: "Count the earliest record, then records at least one hour after the last counted record in each group.",
       onlineTimestamp: "serverDatetime",
       offlineTimestamp: "offlineTimestamp",
+      monthlyTimezone: "UTC",
     },
   };
 }

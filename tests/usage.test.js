@@ -16,6 +16,7 @@ test("empty table reports zero counts", () => {
   const result = summariseUsage([]);
   assert.deepEqual(result.records, { total: 0, test: 0, real: 0, other: 0 });
   assert.equal(result.estimatedRealEpisodes, 0);
+  assert.deepEqual(result.estimatedRealEpisodesByMonth, []);
   assert.equal(result.realRecordsExcludedFromEstimate.total, 0);
 });
 
@@ -55,6 +56,66 @@ test("online and offline records are deduplicated together by occurrence time", 
   ]);
   assert.equal(result.estimatedRealEpisodes, 2);
   assert.equal(result.likelyDuplicateRealRecords, 1);
+});
+
+test("monthly breakdown counts only estimated real episodes in chronological order", () => {
+  const at = (date, overrides = {}) => record(0, {
+    episodeTimestamp: Date.parse(date), ...overrides,
+  });
+  const result = summariseUsage([
+    at("2026-03-05T12:00:00Z"),
+    at("2025-12-31T12:00:00Z", { clientIP: "192.0.2.2" }),
+    at("2026-01-10T12:00:00Z"),
+    at("2026-01-10T12:20:00Z"),
+    at("2026-01-10T12:00:00Z", { project: "project-b" }),
+    at("2026-02-01T12:00:00Z", { episodeType: "test" }),
+    at("2026-02-01T12:00:00Z", { episodeType: "legacy" }),
+    at("2026-02-01T12:00:00Z", { clientIP: null }),
+    record(0, { episodeTimestamp: "invalid" }),
+  ]);
+  assert.deepEqual(result.estimatedRealEpisodesByMonth, [
+    { month: "2025-12", estimatedRealEpisodes: 1 },
+    { month: "2026-01", estimatedRealEpisodes: 2 },
+    { month: "2026-03", estimatedRealEpisodes: 1 },
+  ]);
+  assert.equal(result.estimatedRealEpisodes,
+    result.estimatedRealEpisodesByMonth.reduce((sum, item) => sum + item.estimatedRealEpisodes, 0));
+  assert.equal(result.deduplication.monthlyTimezone, "UTC");
+});
+
+test("deduplication spans month and year boundaries and uses original offline occurrence time", () => {
+  const result = summariseUsage([
+    record(0, { episodeTimestamp: Date.parse("2026-01-01T00:40:00Z"), serverCalculations: 0 }),
+    record(0, { episodeTimestamp: Date.parse("2025-12-31T23:40:00Z"), serverCalculations: 1 }),
+    record(0, { episodeTimestamp: String(Date.parse("2026-01-01T00:10:00Z")),
+      serverCalculations: 0, serverDatetime: "2026-03-01 12:00:00" }),
+    record(0, { episodeTimestamp: Date.parse("2026-01-31T23:50:00Z") }),
+    record(0, { episodeTimestamp: Date.parse("2026-02-01T00:10:00Z") }),
+  ]);
+  assert.deepEqual(result.estimatedRealEpisodesByMonth, [
+    { month: "2025-12", estimatedRealEpisodes: 1 },
+    { month: "2026-01", estimatedRealEpisodes: 2 },
+  ]);
+  assert.equal(result.estimatedRealEpisodes, 3);
+  assert.equal(result.likelyDuplicateRealRecords, 2);
+});
+
+test("monthly boundaries use UTC rather than the supplied timestamp's offset", () => {
+  const result = summariseUsage([
+    record(0, { episodeTimestamp: Date.parse("2026-03-01T00:30:00+01:00") }),
+  ]);
+  assert.deepEqual(result.estimatedRealEpisodesByMonth, [
+    { month: "2026-02", estimatedRealEpisodes: 1 },
+  ]);
+});
+
+test("out-of-range dates are excluded instead of breaking monthly reporting", () => {
+  const result = summariseUsage([
+    ...[1e300, Infinity, Date.UTC(10000, 0, 1)].map((episodeTimestamp) =>
+      record(0, { episodeTimestamp })),
+  ]);
+  assert.equal(result.realRecordsExcludedFromEstimate.missingOrInvalidTimestamp, 3);
+  assert.deepEqual(result.estimatedRealEpisodesByMonth, []);
 });
 
 test("unusable metadata is explicitly excluded, not silently deduplicated", () => {
@@ -113,7 +174,9 @@ test("GET /usage is wired without authentication and returns safe JSON errors", 
   const routes = new Map();
   let fail = false;
   const app = {
-    use() {}, set() {}, post() {}, listen() {},
+    use() {}, set(key, value) {
+      if (key === "trust proxy") assert.equal(value, 1);
+    }, post() {}, listen() {},
     get(path, ...handlers) { routes.set(path, handlers); },
   };
   const response = () => ({
@@ -133,6 +196,7 @@ test("GET /usage is wired without authentication and returns safe JSON errors", 
     "./config.json": require("../config.json"),
     "./modules/validate": {},
     "./modules/handleError": {},
+    "./modules/proxyDiagnostics": { createProxyDiagnostics: () => middleware },
     "./modules/usage": {
       async getUsageStats() {
         if (fail) throw new Error("private database details");
@@ -158,6 +222,9 @@ test("GET /usage is wired without authentication and returns safe JSON errors", 
   await handlers[1]({ headers: {} }, success);
   assert.equal(success.statusCode, 200);
   assert.equal(success.body.estimatedRealEpisodes, 1);
+  assert.deepEqual(success.body.estimatedRealEpisodesByMonth, [
+    { month: "2026-01", estimatedRealEpisodes: 1 },
+  ]);
   assert.equal(success.headers["Cache-Control"], "no-store");
 
   fail = true;

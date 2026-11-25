@@ -34,6 +34,7 @@ Clinical decision-making remains entirely the responsibility of the treating cli
 │                                                      │
 │  Routes:                                             │
 │    GET  /config              ← config + env vars     │
+│    GET  /usage               ← aggregate usage counts│
 │    POST /calculate           ← main clinical endpoint│
 │    POST /sync-offline-data   ← sync offline episode  │
 │    POST /feedback            ← submit feedback       │
@@ -46,6 +47,7 @@ Clinical decision-making remains entirely the responsibility of the treating cli
 │    encrypt.js / decrypt.js    AES+RSA encryption     │
 │    generateAuditID.js         unique ID generation   │
 │    insertData.js              database write         │
+│    usage.js                   usage estimates        │
 │    handleError.js             logging + alerts       │
 └─────────┬───────────────────────────┬────────────────┘
           │ mysql2                    │ Nodemailer
@@ -57,6 +59,62 @@ Clinical decision-making remains entirely the responsibility of the treating cli
 ```
 
 The client can also operate entirely offline (no API call). In that case the calculation runs in the browser using a mirrored copy of `calculateVariables.js`, and the result is stored in `localStorage` for later sync via `POST /sync-offline-data`.
+
+### Usage monitoring
+
+Once the relevant release is deployed, open
+`https://api.diabetes.msf.net/usage` in a browser to view current aggregate
+statistics as JSON. No login is required. The endpoint is configured for
+60 requests per hour per client IP and uses the existing SELECT-only database
+account. The reporting logic is in `modules/usage.js`.
+
+| Field | Meaning |
+| --- | --- |
+| `records.total` | All stored submissions, including tests and possible duplicates. |
+| `records.test` | Submissions labelled as tests, reported once as an overall count. |
+| `records.real` | Submissions labelled as real episodes, before deduplication. |
+| `records.other` | Submissions with other or unrecognised episode types. |
+| `estimatedRealEpisodes` | Estimated real episodes after excluding likely duplicates and unusable records. |
+| `estimatedRealEpisodesByMonth` | The same estimated real episodes grouped by UTC calendar month (`YYYY-MM`), oldest first. |
+| `likelyDuplicateRealRecords` | Real submissions skipped by the one-hour rule. |
+| `realRecordsExcludedFromEstimate` | Counts of real records excluded because their timestamp or client IP/project is missing or invalid; timestamp is checked first so reasons do not overlap. |
+| `deduplication` | The grouping, timing and monthly timezone rules used for the estimate. |
+
+Only **real episodes** are deduplicated or broken down by month. Within each
+client-IP/project group, the earliest record is counted and subsequent records
+are counted only when at least one hour has passed since the last counted
+record. Skipped records do not extend that window.
+
+Online records (`serverCalculations = 1`) use `serverDatetime`; offline records
+(`serverCalculations = 0`) use the original `offlineTimestamp`, not the later
+upload time. DATETIME values are interpreted in the database session timezone
+and must have a consistent stored timezone.
+
+Monthly grouping happens **after** deduplication: a repeat just after midnight
+at the start of a month is still excluded if it falls within the preceding
+counted episode's one-hour window. Monthly counts sum to
+`estimatedRealEpisodes`. Months with no counted episodes are omitted; an empty
+estimate returns an empty monthly list.
+
+Example response excerpt (illustrative figures, not live usage):
+
+```json
+{
+  "estimatedRealEpisodes": 15,
+  "estimatedRealEpisodesByMonth": [
+    { "month": "2026-10", "estimatedRealEpisodes": 6 },
+    { "month": "2026-11", "estimatedRealEpisodes": 9 }
+  ]
+}
+```
+
+Use `estimatedRealEpisodes` to assess progress towards the evaluation target,
+but **do not treat it as a verified patient count**. Different patients using
+the same IP/project within an hour can be combined; repeat calculations after
+an hour or from another IP can be counted separately. Offline records use the
+IP captured at sync, and cases still waiting on a device to upload are absent.
+The report returns no patient fields, individual IPs or project identifiers.
+Failures return a generic error rather than misleading zero counts.
 
 ---
 
@@ -186,6 +244,24 @@ The `operationalCentre` and `project` fields in episode records are stored in pl
 
 ## 9. Testing
 
+### Automated regression tests
+
+Run `npm test` for the automated API regression suite, or
+`node --test tests/usage.test.js` for usage reporting alone. These use synthetic
+data and database substitutes: no production database credentials or email
+delivery are required.
+
+Usage tests cover the overall counts, duplicate detection, monthly ordering,
+UTC boundaries, deduplication across month/year boundaries, online/offline
+occurrence times, missing or invalid metadata, and safe route responses.
+Other regression tests cover request parsing, feedback connection cleanup and
+error-email delivery failures.
+
+These checks do not replace clinical scenario testing or verification against
+the deployed database.
+
+### Postman clinical scenarios
+
 `tests.json` is a Postman collection that provides integration test coverage for the `/config` and `/calculate` endpoints. It covers:
 
 - Mild, standard, and severe DKA scenarios
@@ -232,6 +308,14 @@ The server listens on `process.env.PORT` (default `3000`) and is expected to sit
 | `apiVersion`    | Stamped on episode records                                                                                 |
 | `clientVersion` | Stamped on episode records                                                                                 |
 | `lastUpdated`   | Returned by `/config`                                                                                      |
+| `PROXY_DIAGNOSTICS` | Temporary opt-in proxy logging when exactly `1`; disabled by default. See the README's “Temporary proxy observations (S07)” procedure. |
+
+The current `trust proxy = 1` setting is a provisional LiteSpeed trial, not a
+closed security finding. To collect observations after deployment, enable the
+flag, restart, then request `GET /config` with `X-Proxy-Diagnostic: 1`.
+Only the first 50 marked requests per process are logged to application stdout;
+no extra fields are returned to callers. Disable the flag and restart after
+collection. The README contains normal/forged-header commands and log details.
 
 ### Environment separation
 
