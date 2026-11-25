@@ -1,59 +1,71 @@
 # Security review — MSF Diabetes API
 
-**Review date:** 6 November 2026  
-**Reviewed branch:** `v1.1`  
-**Reviewed revision:** `62a4c2c` (before this report)  
-**Status:** Code review complete; initial deployment answers incorporated. Proxy topology, database grants and backup/retention controls still require confirmation.
+**Original review date:** 6 November 2026
+
+**Original reviewed branch / revision:** `v1.1` / `62a4c2c` (before this report)
+
+**Status refreshed:** 25 November 2026, on `v1.2`
+
+**Status:** Original code review complete; remediation status and operator/hosting
+answers reconciled below. This refresh is not a new vulnerability scan or
+penetration test. Production rollout, proxy-header behaviour, database grants
+and backup/retention controls still require confirmation.
 
 ## Targeted remediation update
 
-**S01 is patched on the development branch, not yet deployed.** Express is now
-4.22.3 and `body-parser` is 1.20.9, retaining the existing major versions.
-The installed tree and lockfile use the patched parser for both the direct
-dependency and Express. Automated tests cover normal/compressed JSON, parser
-errors, the body-size limit and immediate/delayed trailing bytes in an isolated
-local child process without database credentials.
+The operator confirmed that **`v1.1` was merged into GitHub `main`**. The following
+fixes are in that merged code and carried forward on `v1.2`:
 
-A post-update dependency audit no longer reports Express/body-parser findings.
-It still reports **70 package/version advisory records**: 1 critical, 28 high,
-38 moderate and 3 low. The proxy-addr critical advisory remains subject to the
-applicability qualification in S07. Other findings below remain open unless
-explicitly stated otherwise; production remains unpatched until this change
-is reviewed and deployed.
+| Finding | Code status | Production status |
+| --- | --- | --- |
+| S01 — Request-parser crash | Express 4.22.3 and body-parser 1.20.9; regression tests cover compressed/malformed input, body limits and trailing bytes. | Deployment and installed versions not confirmed. |
+| S02 — Feedback connection leak | Connection declared in enclosing scope and closed in `finally`; lifecycle tests cover success and failures. | Deployment not confirmed. |
+| S04 — Unhandled error-email rejection | Delivery failures are caught without replacing the original response or recursively sending alerts. | Deployment not confirmed; bounded delivery remains open under S08/S11. |
+| S07 — Separate proxy-addr package advisory | Patched 2.0.8 line required by dependency override. | Installed version not confirmed; the proxy-trust configuration itself remains unresolved. |
+| S14 — Unused SQLite dependency | Removed after confirming application code uses mysql2; clean-install/test post-merge hook added. | Deployment not confirmed; wider dependency maintenance remains open. |
 
-The assessment below preserves the original review snapshot and its scan counts.
+**Merged is not the same as deployed.** This report does not assert that
+production is either patched or still vulnerable without checking the release
+and dependency tree running on Kualo.
 
-**Post-merge setup follow-up:** A clean install exposed security-firewall blocks
-that the incremental dependency update did not encounter. The unused `sqlite3`
-dependency was removed after confirming application code uses `mysql2`, and a
-compatible `proxy-addr` override requires the patched 2.0.8 line or later.
-The configured post-merge hook now clean-installs the lockfile and runs tests.
-This addresses the specific proxy-addr package advisory, **not** the unresolved
-proxy topology/trust configuration in S07. No database was migrated or replaced.
-The prior dependency counts are historical and were not recalculated here.
+The original OSV scan reported **84 package/version advisory records**. An
+intermediate dependency update reported **70** (1 critical, 28 high, 38 moderate,
+3 low), before further dependency cleanup and the proxy-addr patch.
+**Both counts are historical, not a current outstanding-vulnerability inventory.**
+No new dependency, static or privacy scan was run for this documentation refresh.
+
+Subsequent `v1.2` work adds UTC monthly counts of estimated real episodes to
+`/usage`, after deduplication. It does not fix S09's full-table processing cost.
+The last completed automated regression run passed all **31 tests**; these are
+functional/regression checks using synthetic data, not a production security
+assessment. No database was migrated or replaced.
 
 ## Executive summary
 
-The highest-priority concerns are availability failures and insufficient validation
-of offline submissions, rather than a demonstrated SQL-injection vulnerability or
-a break of AES encryption.
+No direct SQL-injection or existing-patient-record disclosure path was established
+from the weak offline-submission validation. The operator distinguishes erroneous
+reporting records from unauthorised database access; **S03 is now Medium
+integrity/availability hardening**, not a demonstrated confidentiality exploit.
 
-1. **Patch the HTTP dependency chain promptly.** Locked `body-parser` 1.20.2 is
-   affected by a recently disclosed unauthenticated process-crash advisory.
-   Parsing happens before route-specific rate limiting.
-2. **Fix the confirmed feedback database connection leak.** Successful feedback
-   requests never close their connection because of variable scope.
-3. **Handle rejected promises in error emails and decryption.** Failures can
-   escape application catches and terminate a process under normal modern Node defaults.
-4. **Validate offline submissions as untrusted input.** Nonempty objects are not
-   sufficient validation of clinical metadata, encryption envelopes or timestamps.
-5. **Upgrade the confirmed production Node 20 runtime and verify proxy topology.**
-   The private RSA key is currently offline, substantially reducing current
-   decryption exposure. Other data-access and backup controls still need confirmation.
+Current priorities:
+
+1. **Confirm deployment of the completed S01/S02/S04 fixes** and patched
+   proxy-addr dependency.
+2. **Upgrade the last-reported production Node 20 runtime** to a supported
+   release, unless that has already been done.
+3. **Resolve S07 using observations on Kualo.** MSF provides DNS only; LiteSpeed
+   handles traffic into Node. Forwarding-header sanitisation and socket values
+   remain unverified, so a replacement for `trust proxy = 3` must not be guessed.
+4. **Reduce disclosure and abuse consequences:** generic errors, safe/bounded
+   alerts, verified database permissions and backup/retention controls.
+5. **Address input-type consistency and offline schemas** with client-compatible
+   regression tests. Clinical-input handling deserves separate safety review.
+6. **Fix decryption before enabling it.** The production private key is reported
+   offline; historical plaintext, if any, still needs an access assessment.
 
 **During the original review, no production exploitation, database access,
 credential inspection, application fixes, dependency upgrades or Git pushes
-were performed.** The later dependency-only remediation is recorded above.
+were performed.** Later code/dependency remediations are recorded above.
 The intentionally public
 `/usage` route is not classified as a vulnerability merely because it lacks login.
 Its resource consumption and the trustworthiness of its inputs are separate risks.
@@ -65,7 +77,7 @@ access, encryption/decryption, errors/email, usage reporting, package manifests,
 lockfile and deployment documentation. An independent read-only code review was
 also used to cross-check the manual findings.
 
-Automated scan results:
+Original automated scan results (historical, not rerun for this refresh):
 
 | Scanner | Status | Results |
 | --- | --- | --- |
@@ -78,22 +90,28 @@ The same advisory can affect multiple package versions, related advisories can
 overlap, and many require unused library features. Manual findings remain valid
 despite the empty static/privacy results.
 
-Safe, isolated local checks confirmed:
+Safe, isolated local checks during the original review confirmed:
 
 - The offline validation chains accept an arbitrary nonempty `data` object and
   arbitrary nonempty `encryptedData` object.
-- A mocked successful `insertFeedback()` opens one connection and closes zero.
+- A mocked successful `insertFeedback()` opened one connection and closed zero.
+  This was subsequently fixed and covered by lifecycle regression tests (S02).
 - The `shockPresent` validator accepts the string `"false"` and preserves it as a
   truthy JavaScript string.
 
-No live denial-of-service payload was sent, even to the development app.
+No live denial-of-service payload was sent during the original review.
+Later parser regression payloads ran only in isolated local test processes.
 The operator supplied initial production details during the review (below).
-Installed production dependency versions, exact proxy/worker topology, database
-grants, edge controls, backup policy and detailed key custody were not available.
-Lockfile exposure is confirmed; whether production installs that exact lockfile
-still needs confirmation. Frontend/PWA code and its offline local storage are
+Installed production dependency versions, worker topology, database grants,
+edge controls, backup policy and detailed key custody remain unverified.
+The external ingress was subsequently clarified by Kualo/MSF, but its
+forwarding-header trust boundary still needs observation. The original lockfile
+exposure was established and has since been patched for S01; the production
+release and installed dependency tree are not confirmed. Frontend/PWA code and its offline local storage are
 outside this repository's review scope. This is not a complete clinical safety
 validation, penetration test, infrastructure audit or regulatory-compliance opinion.
+Unless explicitly updated, code-line references below point to the original
+review snapshot; use the named functions to locate the current implementation.
 
 ### Rating and effort scale
 
@@ -115,50 +133,59 @@ can extend them.
 The operator reports:
 
 - Kualo shared-IP Linux hosting managed through cPanel.
-- cPanel 138.0 build 21; Apache 2.4.69.
+- cPanel 138.0 build 21. An initial server-information screen listed Apache
+  2.4.69, but **Kualo subsequently corrected the active web server to LiteSpeed**.
 - Database version string `8.0.46-cll-lve`; x86_64 with a CloudLinux/LVE
   EL8-style kernel.
-- **Production Node v20.20.2.** The official Node release table marks Node 20 EOL.
+- **Last-reported production Node v20.20.2.** The official release table checked
+  during the original review marks Node 20 EOL; no runtime upgrade has been
+  confirmed in this review.
 - The supplied cPanel screenshot confirms the Node.js Selector interface,
   **Production** application mode and **`index.js`** as the startup file.
-  Kualo documents its Selector as Passenger-based [R10]; this does not establish
-  the full ingress chain or a safe Express proxy-hop count.
+  Kualo support states LiteSpeed handles the application's `.htaccess`
+  configuration and connection to Node, **not Apache with Phusion Passenger**.
+  Generic setup documentation [R10] does not override account-specific support
+  evidence [R11].
 - **The RSA private key is not online in the current version.**
 - A single operator currently controls access to data, logs and backups.
-- The operator confirms **no CDN is configured**. This does not rule out
-  Kualo-managed internal proxies or other hosting-layer protection.
+- Kualo confirms **direct inbound requests with no CDN/external proxy**, and
+  that Node has **no separate public application port**. MSF confirms **DNS only,
+  no proxy**. [R11/R12]
+- Kualo has **not verified** the socket remote address or forwarded headers
+  reaching Express, and does not recommend a trust setting without observations.
 
 The host's name and shared public IP are not needed for these findings and are
-not reproduced here. Apache/cPanel/CloudLinux package strings do not establish
+not reproduced here. Web-server/cPanel/CloudLinux package strings do not establish
 whether vendor security fixes are current: older-looking kernel versions can
 have backported fixes. No unsupported-OS or specific Apache exploit claim is
 made from those strings alone.
 
 Single-operator access reduces the number of authorised people, but it does not
 establish database least privilege, isolation from other hosting tenants, MFA,
-backup encryption or retention. The number of HTTP proxy hops remains unknown.
+backup encryption or retention. The external ingress is clarified, but the
+effective Express trust boundary and header handling remain unverified.
 The missing private key means the normal `/decrypt` route cannot initiate a
 decryption job; existing plaintext from earlier operations, if any, still needs
 its own access/retention assessment.
 
 ## Risk register
 
-| ID | Hazard | Application risk | Difficulty |
+| ID | Hazard | Current status / application risk | Difficulty |
 | --- | --- | --- | --- |
-| S01 | Vulnerable request parser can crash the API before route limits | High, production-version dependent | Easy–Moderate |
-| S02 | Feedback requests leak MySQL connections | High | Easy |
-| S03 | Offline records lack a strict nested schema and trust policy | High | Moderate–Hard |
-| S04 | Failed error-alert email can cause an unhandled rejection | High, conditional on mail failure | Easy |
+| S01 | Vulnerable request parser can crash the API before route limits | Fixed in merged code; verify deployment. Original risk High. | Easy–Moderate |
+| S02 | Feedback requests leak MySQL connections | Fixed in merged code; verify deployment. Original risk High. | Easy |
+| S03 | Offline records lack a strict nested schema and trust policy | Open; Medium integrity/availability risk, no demonstrated record-disclosure path. | Moderate–Hard |
+| S04 | Failed error-alert email can cause an unhandled rejection | Fixed in merged code; verify deployment. Alert flooding/timeouts remain open. | Easy for completed fix; Moderate for bounded delivery |
 | S05 | Decryption promises escape error handling | Dormant currently; High if decryption enabled | Easy–Moderate |
 | S06 | Decryption exposes persistent plaintext and concentrates privilege | Conditional on legacy plaintext; High if enabled | Moderate–Hard |
-| S07 | Fixed proxy-hop trust may permit IP spoofing/rate-limit evasion | High, conditional | Moderate |
+| S07 | Fixed proxy-hop trust may permit IP spoofing/rate-limit evasion | Open; High conditional. Ingress clarified; production header observations pending. Package advisory patched separately. | Moderate |
 | S08 | Per-process/IP limits do not bound distributed resource abuse | Medium; High at sufficient scale | Moderate |
 | S09 | Public usage reports perform growing full-table work | Medium; High at sufficient scale | Moderate |
 | S10 | Public writes allow fabricated/replayed monitoring data and feedback | Medium | Moderate–Hard |
 | S11 | Errors expose details and inject unescaped content into alerts | Medium | Easy–Moderate |
 | S12 | Accepted primitive types do not match calculation assumptions | Medium; potentially High clinical impact | Moderate |
 | S13 | Encryption does not bind record context or prove submission origin | Medium | Moderate–Hard |
-| S14 | Unused dependencies and install-time packages enlarge supply-chain exposure | Medium | Moderate |
+| S14 | Unused dependencies and install-time packages enlarge supply-chain exposure | Partially addressed; SQLite removed, wider maintenance open. Medium. | Moderate |
 | S15 | Production Node 20 is EOL; other host/transport controls unverified | High runtime maintenance risk; other controls conditional | Moderate |
 | S16 | Retention and secondary copies may bypass encryption protections | Medium–High, conditional | Moderate–Hard |
 | S17 | AI-assisted development introduces prompt-injection/supply-chain risks | Medium–High, conditional | Moderate |
@@ -167,14 +194,16 @@ its own access/retention assessment.
 
 ### S01 — Request-parser vulnerability before route-level protection
 
-**Remediation status:** patched on `v1.1`; production rollout outstanding.
+**Remediation status:** fixed in `v1.1`, merged into main; production deployment
+and installed dependency versions require confirmation.
 The original evidence and rating below describe the pre-fix dependency tree.
 
 **Hazard / rating:** **High**, if production uses the locked vulnerable parser and
 passes compressed request bodies through to Node.
 
-**Evidence:** `package-lock.json` locks `body-parser` 1.20.2, both directly and as
-an Express 4.19.2 dependency. `index.js:59–61` installs JSON parsing globally with
+**Historical evidence:** The original `package-lock.json` locked `body-parser`
+1.20.2, both directly and as an Express 4.19.2 dependency.
+`index.js:59–61` installs JSON parsing globally with
 default decompression enabled. Route limiters run later.
 
 The official advisory **GHSA-27r3-jxmh-p828 / CVE-2026-111181**, published
@@ -196,16 +225,21 @@ not simply changing a version range in `package.json`.
 
 ### S02 — Feedback connection leak can exhaust the database
 
-**Hazard / rating:** **High** availability risk.
+**Remediation status:** fixed in `v1.1`, merged into main; production deployment
+requires confirmation. `insertFeedback()` now declares the connection outside
+`try` and awaits closure in `finally`. Regression tests cover successful writes,
+insert/connection failures and cleanup failures.
 
-**Evidence:** `modules/insertData.js:167–188` declares `const connection` inside
-`try`, then references `connection` in `finally`, outside its scope. The resulting
-ReferenceError is swallowed, so `end()` never runs, including on successful writes.
-A local mocked call confirmed one opened connection and zero closed connections.
+**Original hazard / rating:** **High** availability risk.
 
-Repeated legitimate traffic or automated feedback submissions can accumulate
-connections until MySQL refuses work, affecting clinical calculations too.
-The exact time to exhaustion depends on MySQL limits and idle timeouts.
+**Historical evidence:** `insertFeedback()` originally declared `const connection`
+inside `try`, then referenced it in `finally`, outside its scope. The resulting
+ReferenceError was swallowed, so `end()` never ran, including on successful writes.
+The original mocked call confirmed one opened connection and zero closed connections.
+
+Before the fix, repeated legitimate traffic or automated feedback submissions
+could accumulate connections until MySQL refused work, affecting clinical
+calculations too. Time to exhaustion depended on MySQL limits and idle timeouts.
 
 **Mitigation options:** Declare the connection in the enclosing scope, close it
 reliably in `finally`, and test success and failure paths. A bounded pool plus
@@ -217,8 +251,19 @@ introducing pooling across modules.
 
 ### S03 — Offline sync trusts arbitrary nested objects
 
-**Hazard / rating:** **High** stored-data integrity risk; also a route to repeated
-500s and alert amplification.
+**Remediation status:** open; re-rated after discussion with the operator.
+
+**Hazard / rating:** **Medium** integrity/availability risk: fabricated or
+malformed records, repeated 500s and alert amplification. The operator regards
+erroneous reporting data as a nuisance, distinct from unauthorised access to
+existing patient records. Reassess if stored records drive safety-critical
+decisions or if abuse causes material service disruption.
+
+**Confidentiality qualification:** No path from these weak schema checks to
+reading existing records, bypassing decryption authorisation, decrypting
+existing data or executing arbitrary SQL was demonstrated. Reviewed inserts
+bind values as parameters; the sync route does not return stored records.
+This is not a guarantee against unrelated vulnerabilities elsewhere.
 
 **Evidence:** `modules/validate.js:282–309` checks only that the audit ID is a string
 and the two objects are nonempty. `index.js:395–422` then accesses
@@ -243,12 +288,23 @@ requirements.
 
 ### S04 — Error notification failure can become process failure
 
-**Hazard / rating:** **High**, conditional on SMTP rejection, outage or missing/
+**Remediation status:** the unhandled-rejection defect is fixed in `v1.1`, merged
+into main; production deployment requires confirmation. `handleError()` attaches
+a rejection handler to `sendMail()`, with regression coverage for rejected delivery
+and synchronous transport setup failures surfaced by the async function.
+
+**Remaining work:** no explicit application-configured SMTP timeouts, delivery
+rate limit, bounded queue or recurring-alert suppression were added. Transport
+defaults may provide timeouts, but these have not been assessed as an adequate
+resource budget. Treat remaining alert amplification/resource controls under
+S08/S11, not as evidence the original unhandled-rejection defect persists.
+
+**Original hazard / rating:** **High**, conditional on SMTP rejection, outage or missing/
 incorrect mail configuration.
 
-**Evidence:** `modules/handleError.js:53–65` calls async `sendMail()` without
-awaiting or catching it; `:110–111` awaits SMTP delivery without a catch.
-An ordinary 500 can therefore trigger an unhandled promise rejection. Modern
+**Historical evidence:** `handleError()` called async `sendMail()` without
+awaiting or catching it; SMTP delivery could reject.
+An ordinary 500 could therefore trigger an unhandled promise rejection. Modern
 Node normally treats an unhandled rejection as an uncaught exception unless its
 runtime policy is changed. Process supervision reduces downtime but does not
 remove repeated crash potential.
@@ -314,6 +370,10 @@ the operational workflow permits it.
 
 ### S07 — Proxy trust is unsafe unless ingress topology matches it
 
+**Remediation status:** configuration unresolved; account-specific ingress
+confirmed by Kualo and MSF, production observations still pending. No protected
+diagnostic has been added and the trust setting has not been changed.
+
 **Hazard / rating:** **High, conditional**. Spoofed client IPs can bypass IP-based
 limits and corrupt IP-based reporting.
 
@@ -325,18 +385,52 @@ If any ingress path has fewer hops, allows direct origin access, or fails to
 sanitise forwarding headers, an attacker may control the reported client address.
 Express explicitly warns about different-length ingress paths. [R2]
 
+**Hosting evidence:** Kualo confirms LiteSpeed connects incoming requests to the
+Node process and the app has no separate public application port. There is no
+external CDN/proxy; MSF provides DNS only. This supersedes the earlier
+Apache/Passenger assumption, but does not establish what Express actually sees
+or how LiteSpeed handles attacker-supplied forwarding headers. [R11/R12]
+
 **Mitigation options:** Map every production path, block direct-origin access and
 configure a trust policy matching controlled proxies. Verify how the last trusted
 proxy handles forwarded headers; test expected addresses and bypass attempts in
 staging. Do not blindly change this to `true`, a guessed hop count or a guessed subnet.
 
+**Observation procedure on Kualo (not Replit):**
+
+1. Temporarily capture `req.socket.remoteAddress`, `req.socket.remoteFamily`,
+   incoming `X-Forwarded-For`/`X-Forwarded-Proto`, and Express's
+   `req.ip`, `req.ips` and `req.protocol`. Preserve repeated forwarding-header
+   instances if present. Record absent socket values as absent; do not substitute
+   `req.ip`, which already depends on the setting under investigation.
+2. Use private logs or a temporary protected diagnostic, never a public
+   unrestricted header-dump endpoint. Capture only the listed fields; exclude
+   cookies, credentials and bodies. Retain observations only as long as needed.
+3. From a known external connection, compare ordinary requests with deliberately
+   forged single-address and multi-address forwarding headers. Include repeated
+   header instances and protocol-header manipulation in verification. Note the
+   real public client IP and request times; repeat from a second external
+   connection if practical. Do not originate these requests in cPanel Terminal.
+4. Ask Kualo whether LiteSpeed replaces, appends to or preserves forwarding
+   headers on every path, and whether other shared-hosting tenants can reach
+   the internal Node connection. A local socket/loopback address alone is not
+   proof of exclusive trusted access.
+5. Select the policy from the evidence: disabled trust if the socket already
+   identifies the client; narrowly trusted verified peers if appropriate; or a
+   fixed hop count only after all ingress paths and sanitisation are verified.
+   A caller's fabricated address must not become the effective client IP.
+   Re-run ordinary and spoofed requests after the change before closing S07.
+6. Remove/disable the diagnostic and remove temporary observations after review.
+   cPanel access logs alone may not expose the required application-level values.
+
 **Difficulty:** **Moderate**, mainly infrastructure verification and deployment tests.
 
-**Important scanner qualification:** The audit rates `proxy-addr` 2.0.7 as critical
+**Important scanner qualification:** The original audit rated `proxy-addr` 2.0.7 as critical
 under **GHSA-jqcg-44mw-7w3h / CVE-2026-90711**. That specific advisory requires
 particular mis-specified IPv6 trust subnets. This app currently uses a numeric hop
-function, so the advisory's specific exploit was **not established**. Upgrade the
-dependency, but do not confuse that alert with the separate hop-trust risk. [R3]
+function, so the advisory's specific exploit was **not established**. The code
+now requires patched 2.0.8 or later; verify deployment separately. Do not confuse
+that completed package patch with the unresolved hop-trust risk. [R3]
 
 ### S08 — Rate limits are local and start after body parsing
 
@@ -363,8 +457,10 @@ not only CAPTCHA or blanket authentication that can obstruct clinical access.
 
 **Hazard / rating:** **Medium** now, potentially **High** as records grow.
 
-**Evidence:** `modules/usage.js:97–121` fetches every record's metadata; `:16–69`
-retains/group-sorts timestamps in memory on each request. `/usage` allows
+**Evidence:** `getUsageStats()` in `modules/usage.js` fetches every record's
+metadata; `summariseUsage()` retains/group-sorts timestamps in memory on each
+request. The `v1.2` monthly output is computed after deduplication and does not
+change this full-table access pattern or introduce a cache. `/usage` allows
 60 requests/hour/IP with no cache (`index.js:128–135,163–175`).
 
 Multiple callers can repeatedly consume MySQL CPU, transfer the full result set
@@ -476,13 +572,22 @@ format, and legacy records require explicit compatibility/migration.
 
 ### S14 — Avoidable dependency and installation supply-chain exposure
 
+**Remediation status:** partially addressed. The unused `sqlite3` dependency was
+removed and a clean-install/test post-merge hook added. A clean install exposed
+blocked vulnerable transitive packages that an incremental install had hidden;
+the patched proxy-addr override and SQLite removal allowed setup to succeed.
+Remaining dependencies still need maintenance and a fresh inventory at the next
+dependency review. This refresh did not rerun the scan.
+
 **Hazard / rating:** **Medium**; package installation can execute with build/CI
 privileges even when vulnerable package APIs are unused by the running service.
 
-**Evidence:** `package.json` includes `sqlite3` and `mysql`, but application database
-modules use `mysql2/promise`. `sqlite3` brings native-install/archive tooling such as
+**Historical evidence:** The original `package.json` included `sqlite3` and `mysql`,
+but application database modules use `mysql2/promise`. `sqlite3` brought
+native-install/archive tooling such as
 `tar` and `tar-fs`; the scan reports multiple traversal/overwrite advisories.
-Other locked dependencies also have advisories (see appendix).
+The legacy `mysql` dependency remains in the manifest; reassess before removing.
+Other dependencies were flagged in the historical inventory (see appendix).
 No malicious installed package or actual compromise was established.
 
 **Mitigation options:** Confirm and remove unused direct dependencies, update the
@@ -495,15 +600,17 @@ package origin, publisher and provenance when accepting AI-generated suggestions
 
 ### S15 — Production runtime/transport hardening is not established
 
-**Hazard / rating:** **High runtime maintenance risk, confirmed**: production
-runs Node v20.20.2, which is EOL. Network exposure, tenant isolation, transport
+**Hazard / rating:** **High runtime maintenance risk on the last-reported
+configuration**: production was confirmed as Node v20.20.2, which is EOL;
+an upgrade has not been confirmed. Network exposure, tenant isolation, transport
 and vendor patching remain deployment-dependent.
 
-**Evidence:** `.replit:1` selects Node 20, which the current official release table
-marks EOL; the operator independently confirmed production v20.20.2. [R4]
+**Evidence:** The reviewed `.replit` selects Node 20, which the official release
+table checked during the original review marks EOL; the operator independently
+confirmed production v20.20.2. [R4]
 No specific exploitable Node runtime CVE was demonstrated in this review;
 the confirmed problem is the end of normal upstream security maintenance.
-Production is Kualo shared hosting with Apache/cPanel; the app expects external
+Production is Kualo shared hosting with LiteSpeed/cPanel; the app expects external
 TLS termination and its MySQL
 connections use `host: "localhost"` with no explicit TLS/socket configuration.
 
@@ -629,6 +736,12 @@ No key rotation, deletion or history rewrite was performed.
 
 ## Dependency triage: important qualifications
 
+**Historical inventory:** Package versions and scanner findings in this table
+describe the original review, not the current installed tree. In particular,
+the parser/Express chain and proxy-addr have since been patched, and the unused
+SQLite dependency root removed. See the remediation update above. Other rows
+need a fresh dependency inventory before being treated as current exposure.
+
 | Original reviewed component | Scanner result / relevant condition | Recommended handling |
 | --- | --- | --- |
 | `body-parser` 1.20.2 | High recent compressed-body crash; applies to configured parser unless edge eliminates that input | Prioritise S01; update every installed copy |
@@ -642,10 +755,11 @@ No key rotation, deletion or history rewrite was performed.
 | `qs`, `cookie`, `send`, `serve-static` | Additional parsing/serialization/XSS advisories | No cookies/static serving configured; query parsing still exists; assess each feature and update Express chain |
 | `tar` 6.2.1, `tar-fs` 2.1.1, `minimatch` 3.1.2, `brace-expansion` 1.1.11, `@tootallnate/once` 1.1.2 | Archive/path/complexity/control-flow advisories, mostly transitive/install tooling here | Remove unused dependency roots after verification; otherwise update parents and secure installation environment |
 
-This table groups all audited package names rather than reproducing dozens of
-overlapping advisory descriptions. No `npm audit fix --force`, package installation
-or major-version migration was performed. Exact upgrade targets must be checked
-against current maintainer releases and retested at remediation time.
+This table groups all originally audited package names rather than reproducing
+dozens of overlapping advisory descriptions. No `npm audit fix --force` or
+major-version migration was performed. Later targeted dependency changes are
+recorded above. Exact future upgrade targets must be checked against current
+maintainer releases and retested at remediation time.
 
 ## Existing protections and non-findings
 
@@ -656,7 +770,9 @@ against current maintainer releases and retested at remediation time.
 - Decryption fails closed when its shared secret is absent/wrong; the private key
   is optional and checked before importing the decryption module.
 - `/usage` exposes counts and rule descriptions, not patient fields, IPs or project
-  values. Fine-grained future reports would need a fresh privacy assessment.
+  values. Its `v1.2` monthly output remains aggregate-only; small monthly counts
+  can still reveal activity patterns, so assess further breakdowns before adding
+  them. This does not make the existing public route a patient-record disclosure.
 - JSON body size is configured as `100kb`. This is useful, but not a remedy for
   parser bugs or expensive operations on small requests.
 - CORS restricts allowed browser response access; it is not authentication and
@@ -671,17 +787,19 @@ against current maintainer releases and retested at remediation time.
 
 Please answer without sharing secrets, key material or credential-bearing URLs.
 
-Already answered: Kualo shared hosting, initial Apache/cPanel/database version
-strings, Node v20.20.2, offline production RSA private key and single-operator
-access. Do not request passwords, keys or an unredacted environment dump.
+Already answered: Kualo shared hosting with **LiteSpeed**, cPanel/database version
+strings, last-reported Node v20.20.2, offline production RSA private key and
+single-operator access. MSF is DNS only; Kualo confirms no external CDN/proxy and
+no separate public Node application port. Do not request passwords, keys or an
+unredacted environment dump.
 
-1. **Ingress:** The screenshot identifies the Node.js Selector setup, documented
-   by Kualo as Passenger-based. No CDN is configured by the operator. Confirm
-   any hosting-managed proxy/WAF and the exact reverse-proxy
-   chain; is the Node port
-   reachable directly, are there different-length paths, and which proxy overwrites
-   or appends forwarding headers? Are compressed request bodies forwarded?
-2. **Runtime:** Supported Node upgrade options and vendor OS/MySQL security
+1. **Ingress:** Collect the S07 application-level observations on Kualo, confirm
+   forwarding-header replacement/appending and all ingress paths, and verify
+   internal connection isolation from other hosting tenants. Which hosting
+   request/resource protections apply? Are compressed bodies forwarded?
+2. **Runtime/rollout:** Which release and exact dependency versions run in
+   production, including the S01/S02/S04 fixes and proxy-addr patch? Has Node
+   been upgraded since v20.20.2 was reported? Supported upgrade options and vendor OS/MySQL security
    maintenance/update process; number of
    workers/instances; restart policy, memory/CPU limits and Node rejection flags?
    Does deployment use this lockfile through `npm ci`?
@@ -700,15 +818,18 @@ access. Do not request passwords, keys or an unredacted environment dump.
 
 ## Suggested remediation order — not implementation approval
 
-1. **Immediate patch/reliability work:** S01 parser chain, S02 connection leak,
-   S04 caught alert delivery and S15 supported Node migration. S05 before any
-   future decryption enablement.
-2. **Confirm exposure:** S06/S07/S15 production access, proxy trust, runtime and
-   database grants. Interim decryption/encoding restrictions require operator approval.
-3. **Input/data integrity:** S03/S10/S12 strict contracts, replay policy and
-   clinical-compatible regression tests.
-4. **Resource/privacy controls:** S08/S09/S11/S16 bounded work, reporting cache,
-   redaction, retention and backups.
+1. **Verify completed fixes are deployed:** S01 parser chain, S02 feedback
+   connection cleanup, S04 caught alert delivery and the patched proxy-addr
+   dependency. Do not reopen these as unimplemented code defects.
+2. **Runtime and trust boundary:** S15 supported Node migration and S07 production
+   observations, verified policy and spoof-resistance checks. Confirm S06
+   historical plaintext, database grants and operational access controls.
+3. **Disclosure/resource controls:** S08/S09/S11/S16 bounded work, safe errors and
+   alerts, reporting cache, retention and backups.
+4. **Input/data integrity:** S12 canonical primitive types with clinical-compatible
+   regression tests, plus S03/S10 strict offline contracts and replay policy.
+   S03 is not an established confidentiality exploit. S05/S06 must be addressed
+   before any future web-decryption enablement.
 5. **Ongoing lifecycle:** S13/S14/S17/S18 versioned envelopes, dependency
    maintenance, AI tooling controls and key migration planning.
 
@@ -718,8 +839,10 @@ behaviour changes, new authentication requirements or data deletion.
 
 ## Sources
 
-Sources checked on 6 November 2026. Advisory statements describe upstream
-prerequisites; local applicability is assessed separately above.
+Public sources checked during the original review on 6 November 2026; not
+refetched for the 25 November status refresh. Subsequent operator-supplied
+hosting correspondence is identified separately below. Advisory statements
+describe upstream prerequisites; local applicability is assessed separately above.
 
 - **R1:** [body-parser advisory GHSA-27r3-jxmh-p828](https://github.com/expressjs/body-parser/security/advisories/GHSA-27r3-jxmh-p828), published 22 October 2026; compressed-body crash, affected and patched versions.
 - **R2:** [Express behind proxies](https://expressjs.com/en/guide/behind-proxies.html), official guidance on numeric trust and multiple ingress paths.
@@ -730,4 +853,6 @@ prerequisites; local applicability is assessed separately above.
 - **R7:** [USENIX Security 2025: We Have a Package for You!](https://www.usenix.org/conference/usenixsecurity25/presentation/spracklen), primary research on code-generating LLM package hallucinations.
 - **R8:** [NCSC: Impact of AI on cyber threat from now to 2027](https://www.ncsc.gov.uk/report/impact-ai-cyber-threat-now-2027), assessment of AI-enabled vulnerability research, exploitation and patch urgency.
 - **R9:** [NIST finalised post-quantum standards](https://www.nist.gov/news-events/news/2024/08/nist-releases-first-3-finalized-post-quantum-encryption-standards), 13 August 2024; long-term cryptographic migration context.
-- **R10:** [Kualo: Enabling Node.js in cPanel](https://www.kualo.com/knowledgebase/dev-languages/enabling-nodejs-in-cpanel), updated 13 June 2026; documents Node.js Selector and Passenger integration, not the specific account's complete ingress topology.
+- **R10:** [Kualo: Enabling Node.js in cPanel](https://www.kualo.com/knowledgebase/dev-languages/enabling-nodejs-in-cpanel), originally consulted for generic Node.js Selector setup. Do not infer this account's active web server or ingress topology from that article; later account-specific support correspondence supersedes the Apache/Passenger assumption.
+- **R11:** Kualo support correspondence supplied by the operator: LiteSpeed handles the application's `.htaccess` and Node connection; direct inbound requests, no CDN/external proxy and no separate public application port. Socket/forwarding-header values were explicitly not verified by Kualo.
+- **R12:** MSF IT correspondence supplied by the operator: the requested URLs use DNS pointing directly to the target IP; MSF adds no proxy.
